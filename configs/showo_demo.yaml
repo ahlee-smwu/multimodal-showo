@@ -11,23 +11,23 @@ experiment:
 model:
     vq_model:
         type: "magvitv2"
-        vq_model_name: "showlab/magvitv2"
+        pretrained: "./checkpoints/magvitv2.pth"
 
     showo:
-        pretrained_model_path: "showlab/show-o"
         w_clip_vit: False
-        vocab_size: 58498
+        vocab_size: 58498 # 50295 (phi) + 1 (pad) 9 (special tokens) e.g., <soi> <eoi> <sovi> <eovi> <t2i> <mmu> <t2v> <v2v> <lvg> (128266)/ + 8192 (tokenizer) + 1 (mask)
         llm_vocab_size: 50295
-        llm_model_path: 'microsoft/phi-1_5'
+        pretrained_model_path: './checkpoints/phi-1_5'
         codebook_size: 8192
         num_vq_tokens: 256
-        num_new_special_tokens: 10  # <|soi|> <|eoi|> <|sov|> <|eov|> <|t2i|> <|mmu|> <|t2v|> <|v2v|> <|lvg|> <|pad|>
 
     gradient_checkpointing: True
+    enable_xformers_memory_efficient_attention: True
+
 
 dataset:
     gen_type: "t2i"
-    und_type: "captioning"
+    und_type: "large_cap"
     params:
         batch_size: ${training.batch_size}
         shuffle_buffer_size: 1000

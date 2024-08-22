@@ -3,7 +3,6 @@ import copy
 import json
 import torch
 from functools import partial
-from transformers import CLIPImageProcessor
 from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
@@ -83,8 +82,6 @@ class LLaVAPretrainCaptioningDataset(Dataset):
             if 'image' in item.keys():
                 self.list_data_dict.append(item)
 
-        self.processor = CLIPImageProcessor.from_pretrained("openai/clip-vit-large-patch14-336")
-
         print("Formatting llava captioning data")
 
     def __len__(self):
@@ -101,8 +98,7 @@ class LLaVAPretrainCaptioningDataset(Dataset):
         image_folder = self.image_root
         image = Image.open(os.path.join(image_folder, image_file)).convert('RGB')
 
-        # image = image_transform(image)
-        image = self.processor.preprocess(image, return_tensors='pt')['pixel_values'][0]
+        image = image_transform(image)
 
         sources = preprocess_multimodal(copy.deepcopy([e["conversations"] for e in sources]))
 

@@ -3,7 +3,6 @@ import copy
 import json
 import torch
 from functools import partial
-from transformers import CLIPImageProcessor
 from PIL import ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 from PIL import Image
@@ -159,8 +158,6 @@ class LLaVAInstructDataset(Dataset):
             if 'image' in item.keys():
                 self.list_data_dict.append(item)
 
-        self.processor = CLIPImageProcessor.from_pretrained("openai/clip-vit-large-patch14-336")
-
         print("Formatting llava instruction data")
 
     def __len__(self):
@@ -177,11 +174,10 @@ class LLaVAInstructDataset(Dataset):
         image_folder = self.image_root
         try:
             image = Image.open(os.path.join(image_folder, image_file)).convert('RGB')
-            # image = image_transform(image)
-            image = self.processor.preprocess(image, return_tensors='pt')['pixel_values'][0]
+            image = image_transform(image)
         except:
             print("Read image error. Use dummy data.")
-            crop_size = 336
+            crop_size = 256
             image = torch.zeros(3, crop_size, crop_size)
 
         sources = preprocess_multimodal(copy.deepcopy([e["conversations"] for e in sources]))
@@ -198,7 +194,7 @@ class LLaVAInstructDataset(Dataset):
             data_dict['image'] = image
         else:
             # image does not exist in the data, but the model is multimodal
-            crop_size = 336
+            crop_size = 256
             data_dict['image'] = torch.zeros(3, crop_size, crop_size)
 
         return data_dict
