@@ -51,7 +51,7 @@ dataset:
         external_journeydb_caption_path: "/mnt/bn/vgfm2/test_mlx/xavier/code/3062/open_muse/train_journeydb_anno.json"
         external_laion12m_caption_path: "/mnt/bn/vgfm/laion5b/laion-aesthetics-12m-captions"
         external_cc12m_caption_path: '/mnt/bn/vgfm/cc12m/captions/'
-        validation_prompts_file: "validation_prompts/text2image_prompts.txt"
+        validation_prompts_file: "validation_prompts/showoprompts.txt"
         shuffle_buffer_size: 1000
         num_workers: 32
         resolution: 256
@@ -82,14 +82,13 @@ lr_scheduler:
 
 training:
     gradient_accumulation_steps: 1
-    noise_type: "mask"
     batch_size_t2i: 4
     batch_size_lm: 2
     batch_size_mmu: 7
     mixed_precision: "bf16"
     enable_tf32: True
     seed: 10086
-    max_train_steps: 10000
+    max_train_steps: 100000
     overfit_one_batch: False
     cond_dropout_prob: 0.1
     min_masking_rate: 0.0
