@@ -38,7 +38,6 @@ from models.lr_schedulers import get_scheduler
 from models.my_logging import set_verbosity_info, set_verbosity_error
 from models.misc import prepare_gen_input, get_text_tokenizer, get_weight_type
 from torch.nn.attention.flex_attention import flex_attention
-os.environ["TOKENIZERS_PARALLELISM"] = "true"
 
 if torch.cuda.is_available():
     flex_attention = torch.compile(flex_attention)
@@ -165,7 +164,7 @@ def main():
     config.model.showo.llm_vocab_size = len(text_tokenizer)
 
     if config.model.showo.load_from_showo:
-        model = Showo2Qwen2_5.from_pretrained(config.model.showo.pretrained_model_path, use_safetensors=False).to(accelerator.device)
+        model = Showo2Qwen2_5.from_pretrained(config.model.showo.pretrained_model_path).to(accelerator.device)
     else:
         model = Showo2Qwen2_5(**config.model.showo).to(accelerator.device)
 
@@ -329,9 +328,6 @@ def main():
             model.load_state_dict(state_dict, strict=False if config.model.showo.params_not_load is not None else True)
             del state_dict
 
-        # we recommend save and load the dataloader state
-        # these save and recover functions are based on our internal packages
-        # please modified them when necessary
         # recover_dataloader_state(accelerator.process_index, train_dataloader_t2i, config.experiment.output_dataloader_state_dir)
 
     # Combine these dataloaders into a single iterable model
@@ -425,6 +421,29 @@ def main():
             masks = torch.cat(masks, dim=0)
         else:
             masks = image_masks
+
+        if data_type[0] == 'interleaved_data':
+            b, n = shape
+            image_latents = image_latents.reshape(b, n, c, h, w)
+            ut = ut.reshape(b, n, c, h, w)
+            xt = xt.reshape(b, n, c, h, w)
+            t = t.reshape(b, n)
+
+            # only denoise the last image
+            if preproc_config.only_denoise_last_image:
+                for i in range(b):
+                    non_zero_max_idx = max([i for i, pos in enumerate(modality_positions[i]) if pos[1] != 0])
+                    xt[i, :non_zero_max_idx] = image_latents[i][None][:, :non_zero_max_idx].clone()
+                    # ut[i, :non_zero_max_idx] = torch.zeros_like(image_latents[i][None][:, :non_zero_max_idx])
+                    t[i, :non_zero_max_idx] = t[i, :non_zero_max_idx] * 0.0 + 1.0
+
+                    for j in range(non_zero_max_idx):
+                        img_sid, length = modality_positions[i, j]
+                        masks[i, img_sid: img_sid + length] = 0
+
+            ut = ut.reshape(b * n, c, h, w)
+            xt = xt.reshape(b * n, c, h, w)
+            t = t.reshape(b * n)
 
         return xt, t, ut, recons_images, masks
 
@@ -621,9 +640,6 @@ def main():
 
     # Evaluate and save checkpoint at the end of training
     save_checkpoint(model, config, accelerator, "final")
-    # we recommend save and load the dataloader state
-    # these save and recover functions are based on our internal packages
-    # please modified them when necessary
     # save_dataloader_state(accelerator.process_index, train_dataloader_t2i, config.experiment.output_dataloader_state_dir)
     # logger.info(f"Saved dataloader state to {config.experiment.output_dataloader_state_dir}")
 
@@ -656,7 +672,7 @@ def generate_images(
 
     num_image_tokens, num_video_tokens, max_seq_len, max_text_len, image_latent_dim, patch_size, latent_width, \
     latent_height, pad_id, bos_id, eos_id, boi_id, eoi_id, bov_id, eov_id, image_pad_id, video_pad_id, guidance_scale \
-        = get_hyper_params(config, text_tokenizer, showo_token_ids)
+        = get_hyper_params(config, text_tokenizer, showo_token_ids, is_hq=True)
 
     batch_text_tokens, batch_text_tokens_null, batch_modality_positions, batch_modality_positions_null = \
         prepare_gen_input(
