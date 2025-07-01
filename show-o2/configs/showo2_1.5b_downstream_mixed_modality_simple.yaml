@@ -6,8 +6,8 @@ wandb:
 
 experiment:
     project: "show-o2-2b-stage-1"
-    name: "show-o2-1.5b-downstream-mixed-modality-432x432"
-    output_dir: "show-o2-1.5b-downstream-mixed-modality-432x432"
+    name: "show-o2-qwen2-5-1.5b-downstream-mixed-modality-432x432"
+    output_dir: "show-o2-qwen2-5-1.5b-downstream-mixed-modality-432x432"
     output_dataloader_state_dir: null
     max_train_examples_t2i: 60000000 # 10M HQ generation data
     max_train_examples_mmu: null
@@ -20,7 +20,7 @@ experiment:
 model:
     vae_model:
         type: "wan21"
-        pretrained_model_path: "Wan_VAE_model/Wan2.1_VAE.pth"
+        pretrained_model_path: "/mnt/bn/vgfm2/test_mlx/xavier/code/0923/show-o-next-v5/Wan2.1_VAE.pth"
 
     showo:
         model_name: "Showo2"
@@ -55,8 +55,8 @@ dataset:
     accumulation: 1
     mixed_loader_mode: "sequential_max_size_cycle"
     params:
-        train_mixed_modal_shards_path_or_url: "/path/to/your/images/train"
-        annotation_path: "/path/to/your/vist_train_annotations.json"
+        train_mixed_modal_shards_path_or_url: "/mnt/bn/vgfm2/test_mlx/xavier/data/visual_story_telling/train_images/images/train"
+        annotation_path: "/mnt/bn/vgfm2/test_mlx/xavier/data/visual_story_telling/vst_train_annotations.json"
         is_clip_encoder: False
         default_system_prompt: ""
         add_caption_prompt: True
