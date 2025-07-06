@@ -1,0 +1,236 @@
+ .idea/.gitignore                                                                             |   8 [32m+[m
+ .idea/Show-o.iml                                                                             |  12 [32m+[m
+ .idea/inspectionProfiles/Project_Default.xml                                                 |  12 [32m+[m
+ .idea/inspectionProfiles/profiles_settings.xml                                               |   6 [32m+[m
+ .idea/misc.xml                                                                               |   7 [32m+[m
+ .idea/modules.xml                                                                            |   8 [32m+[m
+ .idea/vcs.xml                                                                                |   8 [32m+[m
+ .ipynb_checkpoints/inference_mmu-checkpoint.ipynb                                            | 314 [32m+++++++++++++++++++++++++[m
+ AvaMERG_images/03993utt0_67.png                                                              | Bin [31m0[m -> [32m661700[m bytes
+ AvaMERG_images/03998utt2_60.png                                                              | Bin [31m0[m -> [32m569799[m bytes
+ AvaMERG_images/AvaMERG-test.json                                                             |  16 [32m++[m
+ AvaMERG_images/AvaMERG_preprocessing.py                                                      |  59 [32m+++++[m
+ configs/showo_instruction_tuning_1_w_clip_vit.yaml                                           |   1 [32m+[m
+ configs/showo_instruction_tuning_2_w_clip_vit.yaml                                           |   7 [32m+[m[31m-[m
+ inference_mmu.ipynb                                                                          | 125 [32m+++++[m[31m-----[m
+ inference_mmu.py                                                                             |   2 [32m+[m[31m-[m
+ llava/__pycache__/__init__.cpython-310.pyc                                                   | Bin [31m0[m -> [32m185[m bytes
+ llava/__pycache__/llava_instruct_data.cpython-310.pyc                                        | Bin [31m0[m -> [32m7047[m bytes
+ llava/__pycache__/llava_pretrain_data.cpython-310.pyc                                        | Bin [31m0[m -> [32m5808[m bytes
+ llava/llava/__pycache__/__init__.cpython-310.pyc                                             | Bin [31m0[m -> [32m191[m bytes
+ llava/llava/__pycache__/conversation.cpython-310.pyc                                         | Bin [31m0[m -> [32m10860[m bytes
+ llava/llava_instruct_data.py                                                                 |   7 [32m+[m[31m-[m
+ llava/llava_pretrain_data.py                                                                 |   1 [32m+[m
+ mmu_validation_emotion/03993utt0_67.png                                                      | Bin [31m0[m -> [32m661700[m bytes
+ models/__pycache__/__init__.cpython-310.pyc                                                  | Bin [31m0[m -> [32m425[m bytes
+ models/__pycache__/clip_encoder.cpython-310.pyc                                              | Bin [31m0[m -> [32m5209[m bytes
+ models/__pycache__/common_modules.cpython-310.pyc                                            | Bin [31m0[m -> [32m10161[m bytes
+ models/__pycache__/logging.cpython-310.pyc                                                   | Bin [31m0[m -> [32m9398[m bytes
+ models/__pycache__/lr_schedulers.cpython-310.pyc                                             | Bin [31m0[m -> [32m10671[m bytes
+ models/__pycache__/misc.cpython-310.pyc                                                      | Bin [31m0[m -> [32m1491[m bytes
+ models/__pycache__/modeling_magvitv2.cpython-310.pyc                                         | Bin [31m0[m -> [32m11112[m bytes
+ models/__pycache__/modeling_showo.cpython-310.pyc                                            | Bin [31m0[m -> [32m5699[m bytes
+ models/__pycache__/modeling_utils.cpython-310.pyc                                            | Bin [31m0[m -> [32m39712[m bytes
+ models/__pycache__/phi.cpython-310.pyc                                                       | Bin [31m0[m -> [32m42045[m bytes
+ models/__pycache__/sampling.cpython-310.pyc                                                  | Bin [31m0[m -> [32m4193[m bytes
+ parquet/__pycache__/__init__.cpython-310.pyc                                                 | Bin [31m0[m -> [32m247[m bytes
+ parquet/__pycache__/refinedweb_dataset.cpython-310.pyc                                       | Bin [31m0[m -> [32m2199[m bytes
+ show-o2/Wan_VAE_model/download-wan-vae.py                                                    |  21 [32m++[m
+ show-o2/__pycache__/utils.cpython-310.pyc                                                    | Bin [31m0[m -> [32m7389[m bytes
+ show-o2/configs/showo2_1.5b_demo_432x432_mixed_modal.yaml                                    |   3 [32m+[m[31m-[m
+ show-o2/configs/showo2_1.5b_downstream_mixed_modality_simple.yaml                            |   2 [32m+[m[31m-[m
+ show-o2/configs/showo2_7b_demo_432x432.yaml                                                  |   2 [32m+[m[31m-[m
+ show-o2/datasets/__pycache__/__init__.cpython-310.pyc                                        | Bin [31m0[m -> [32m416[m bytes
+ show-o2/datasets/__pycache__/image_text_dataset.cpython-310.pyc                              | Bin [31m0[m -> [32m7930[m bytes
+ show-o2/datasets/__pycache__/mixed_dataloader.cpython-310.pyc                                | Bin [31m0[m -> [32m4616[m bytes
+ show-o2/datasets/__pycache__/mmu_dataset.cpython-310.pyc                                     | Bin [31m0[m -> [32m7005[m bytes
+ show-o2/datasets/__pycache__/utils.cpython-310.pyc                                           | Bin [31m0[m -> [32m6649[m bytes
+ show-o2/datasets/__pycache__/vist_dataset.cpython-310.pyc                                    | Bin [31m0[m -> [32m6980[m bytes
+ show-o2/models/__pycache__/__init__.cpython-310.pyc                                          | Bin [31m0[m -> [32m497[m bytes
+ show-o2/models/__pycache__/lr_schedulers.cpython-310.pyc                                     | Bin [31m0[m -> [32m10682[m bytes
+ show-o2/models/__pycache__/misc.cpython-310.pyc                                              | Bin [31m0[m -> [32m11023[m bytes
+ show-o2/models/__pycache__/modeling_semantic_layers.cpython-310.pyc                          | Bin [31m0[m -> [32m2768[m bytes
+ show-o2/models/__pycache__/modeling_showo2_qwen2_5.cpython-310.pyc                           | Bin [31m0[m -> [32m14003[m bytes
+ show-o2/models/__pycache__/modeling_siglip.cpython-310.pyc                                   | Bin [31m0[m -> [32m50030[m bytes
+ show-o2/models/__pycache__/modeling_utils.cpython-310.pyc                                    | Bin [31m0[m -> [32m39743[m bytes
+ show-o2/models/__pycache__/modules.cpython-310.pyc                                           | Bin [31m0[m -> [32m26380[m bytes
+ show-o2/models/__pycache__/my_logging.cpython-310.pyc                                        | Bin [31m0[m -> [32m9409[m bytes
+ show-o2/models/__pycache__/omni_attention.cpython-310.pyc                                    | Bin [31m0[m -> [32m2599[m bytes
+ show-o2/models/__pycache__/qwen2.cpython-310.pyc                                             | Bin [31m0[m -> [32m45403[m bytes
+ show-o2/models/__pycache__/wan21_vae.cpython-310.pyc                                         | Bin [31m0[m -> [32m17945[m bytes
+ show-o2/train_showo2_1.5b_stage1.sh                                                          |   2 [32m+[m[31m-[m
+ show-o2/transport/__pycache__/__init__.cpython-310.pyc                                       | Bin [31m0[m -> [32m1670[m bytes
+ show-o2/transport/__pycache__/integrators.cpython-310.pyc                                    | Bin [31m0[m -> [32m3814[m bytes
+ show-o2/transport/__pycache__/path.cpython-310.pyc                                           | Bin [31m0[m -> [32m8432[m bytes
+ show-o2/transport/__pycache__/transport.cpython-310.pyc                                      | Bin [31m0[m -> [32m15921[m bytes
+ show-o2/transport/__pycache__/utils.cpython-310.pyc                                          | Bin [31m0[m -> [32m2297[m bytes
+ show-o2/wandb/debug-internal.log                                                             |   1 [32m+[m
+ show-o2/wandb/debug.log                                                                      |   1 [32m+[m
+ show-o2/wandb/latest-run                                                                     |   1 [32m+[m
+ show-o2/wandb/run-20250702_142656-8x4q841b/files/code/show-o2/inference_mixed_modality.py    | 266 [32m+++++++++++++++++++++[m
+ show-o2/wandb/run-20250702_142656-8x4q841b/files/config.yaml                                 | 172 [32m++++++++++++++[m
+ show-o2/wandb/run-20250702_142656-8x4q841b/files/output.log                                  |  29 [32m+++[m
+ show-o2/wandb/run-20250702_142656-8x4q841b/files/requirements.txt                            | 207 [32m+++++++++++++++++[m
+ show-o2/wandb/run-20250702_142656-8x4q841b/files/wandb-metadata.json                         |  43 [32m++++[m
+ show-o2/wandb/run-20250702_142656-8x4q841b/files/wandb-summary.json                          |   1 [32m+[m
+ show-o2/wandb/run-20250702_142656-8x4q841b/logs/debug-core.log                               |   1 [32m+[m
+ show-o2/wandb/run-20250702_142656-8x4q841b/logs/debug-internal.log                           |  13 [32m++[m
+ show-o2/wandb/run-20250702_142656-8x4q841b/logs/debug.log                                    |  22 [32m++[m
+ show-o2/wandb/run-20250702_142656-8x4q841b/run-8x4q841b.wandb                                | Bin [31m0[m -> [32m6947[m bytes
+ show-o2/wandb/run-20250702_144750-y7wam5fb/files/code/show-o2/inference_mixed_modality.py    | 266 [32m+++++++++++++++++++++[m
+ show-o2/wandb/run-20250702_144750-y7wam5fb/files/config.yaml                                 | 182 [32m+++++++++++++++[m
+ show-o2/wandb/run-20250702_144750-y7wam5fb/files/output.log                                  |  29 [32m+++[m
+ show-o2/wandb/run-20250702_144750-y7wam5fb/files/requirements.txt                            | 207 [32m+++++++++++++++++[m
+ show-o2/wandb/run-20250702_144750-y7wam5fb/files/wandb-metadata.json                         |  43 [32m++++[m
+ show-o2/wandb/run-20250702_144750-y7wam5fb/files/wandb-summary.json                          |   1 [32m+[m
+ show-o2/wandb/run-20250702_144750-y7wam5fb/logs/debug-core.log                               |   1 [32m+[m
+ show-o2/wandb/run-20250702_144750-y7wam5fb/logs/debug-internal.log                           |  13 [32m++[m
+ show-o2/wandb/run-20250702_144750-y7wam5fb/logs/debug.log                                    |  22 [32m++[m
+ show-o2/wandb/run-20250702_144750-y7wam5fb/run-y7wam5fb.wandb                                | Bin [31m0[m -> [32m7245[m bytes
+ show-o2/wandb/run-20250702_144940-9sjq2x5r/files/code/show-o2/inference_mixed_modality.py    | 266 [32m+++++++++++++++++++++[m
+ show-o2/wandb/run-20250702_144940-9sjq2x5r/files/config.yaml                                 | 298 [32m++++++++++++++++++++++++[m
+ show-o2/wandb/run-20250702_144940-9sjq2x5r/files/output.log                                  |  29 [32m+++[m
+ show-o2/wandb/run-20250702_144940-9sjq2x5r/files/requirements.txt                            | 207 [32m+++++++++++++++++[m
+ show-o2/wandb/run-20250702_144940-9sjq2x5r/files/wandb-metadata.json                         |  43 [32m++++[m
+ show-o2/wandb/run-20250702_144940-9sjq2x5r/files/wandb-summary.json                          |   1 [32m+[m
+ show-o2/wandb/run-20250702_144940-9sjq2x5r/logs/debug-core.log                               |   1 [32m+[m
+ show-o2/wandb/run-20250702_144940-9sjq2x5r/logs/debug-internal.log                           |  13 [32m++[m
+ show-o2/wandb/run-20250702_144940-9sjq2x5r/logs/debug.log                                    |  22 [32m++[m
+ show-o2/wandb/run-20250702_144940-9sjq2x5r/run-9sjq2x5r.wandb                                | Bin [31m0[m -> [32m9824[m bytes
+ show-o2/wandb/run-20250702_145344-j1xpr7vn/files/code/show-o2/inference_mixed_modality.py    | 266 [32m+++++++++++++++++++++[m
+ show-o2/wandb/run-20250702_145344-j1xpr7vn/files/config.yaml                                 | 201 [32m++++++++++++++++[m
+ show-o2/wandb/run-20250702_145344-j1xpr7vn/files/output.log                                  |  29 [32m+++[m
+ show-o2/wandb/run-20250702_145344-j1xpr7vn/files/requirements.txt                            | 207 [32m+++++++++++++++++[m
+ show-o2/wandb/run-20250702_145344-j1xpr7vn/files/wandb-metadata.json                         |  50 [32m++++[m
+ show-o2/wandb/run-20250702_145344-j1xpr7vn/files/wandb-summary.json                          |   1 [32m+[m
+ show-o2/wandb/run-20250702_145344-j1xpr7vn/logs/debug-core.log                               |   1 [32m+[m
+ show-o2/wandb/run-20250702_145344-j1xpr7vn/logs/debug-internal.log                           |  13 [32m++[m
+ show-o2/wandb/run-20250702_145344-j1xpr7vn/logs/debug.log                                    |  22 [32m++[m
+ show-o2/wandb/run-20250702_145344-j1xpr7vn/run-j1xpr7vn.wandb                                | Bin [31m0[m -> [32m7698[m bytes
+ show-o2/wandb/run-20250702_150241-r36693pf/files/code/show-o2/inference_mixed_modality.py    | 266 [32m+++++++++++++++++++++[m
+ show-o2/wandb/run-20250702_150241-r36693pf/files/config.yaml                                 | 201 [32m++++++++++++++++[m
+ show-o2/wandb/run-20250702_150241-r36693pf/files/output.log                                  |  29 [32m+++[m
+ show-o2/wandb/run-20250702_150241-r36693pf/files/requirements.txt                            | 207 [32m+++++++++++++++++[m
+ show-o2/wandb/run-20250702_150241-r36693pf/files/wandb-metadata.json                         |  50 [32m++++[m
+ show-o2/wandb/run-20250702_150241-r36693pf/files/wandb-summary.json                          |   1 [32m+[m
+ show-o2/wandb/run-20250702_150241-r36693pf/logs/debug-core.log                               |   1 [32m+[m
+ show-o2/wandb/run-20250702_150241-r36693pf/logs/debug-internal.log                           |  13 [32m++[m
+ show-o2/wandb/run-20250702_150241-r36693pf/logs/debug.log                                    |  22 [32m++[m
+ show-o2/wandb/run-20250702_150241-r36693pf/run-r36693pf.wandb                                | Bin [31m0[m -> [32m7717[m bytes
+ show-o2/wandb/run-20250702_150625-tk8dgwfg/files/code/show-o2/inference_mixed_modality.py    | 266 [32m+++++++++++++++++++++[m
+ show-o2/wandb/run-20250702_150625-tk8dgwfg/files/config.yaml                                 | 201 [32m++++++++++++++++[m
+ show-o2/wandb/run-20250702_150625-tk8dgwfg/files/output.log                                  |  29 [32m+++[m
+ show-o2/wandb/run-20250702_150625-tk8dgwfg/files/requirements.txt                            | 207 [32m+++++++++++++++++[m
+ show-o2/wandb/run-20250702_150625-tk8dgwfg/files/wandb-metadata.json                         |  50 [32m++++[m
+ show-o2/wandb/run-20250702_150625-tk8dgwfg/files/wandb-summary.json                          |   1 [32m+[m
+ show-o2/wandb/run-20250702_150625-tk8dgwfg/logs/debug-core.log                               |   1 [32m+[m
+ show-o2/wandb/run-20250702_150625-tk8dgwfg/logs/debug-internal.log                           |  13 [32m++[m
+ show-o2/wandb/run-20250702_150625-tk8dgwfg/logs/debug.log                                    |  22 [32m++[m
+ show-o2/wandb/run-20250702_150625-tk8dgwfg/run-tk8dgwfg.wandb                                | Bin [31m0[m -> [32m7939[m bytes
+ show-o2/wandb/run-20250702_151817-smbh8nhm/files/code/show-o2/inference_mmu.py               | 180 [32m+++++++++++++++[m
+ show-o2/wandb/run-20250702_151817-smbh8nhm/files/config.yaml                                 | 180 [32m+++++++++++++++[m
+ show-o2/wandb/run-20250702_151817-smbh8nhm/files/output.log                                  |  29 [32m+++[m
+ show-o2/wandb/run-20250702_151817-smbh8nhm/files/requirements.txt                            | 207 [32m+++++++++++++++++[m
+ show-o2/wandb/run-20250702_151817-smbh8nhm/files/wandb-metadata.json                         |  45 [32m++++[m
+ show-o2/wandb/run-20250702_151817-smbh8nhm/files/wandb-summary.json                          |   1 [32m+[m
+ show-o2/wandb/run-20250702_151817-smbh8nhm/logs/debug-core.log                               |   1 [32m+[m
+ show-o2/wandb/run-20250702_151817-smbh8nhm/logs/debug-internal.log                           |  13 [32m++[m
+ show-o2/wandb/run-20250702_151817-smbh8nhm/logs/debug.log                                    |  22 [32m++[m
+ show-o2/wandb/run-20250702_151817-smbh8nhm/run-smbh8nhm.wandb                                | Bin [31m0[m -> [32m7096[m bytes
+ show-o2/wandb/run-20250702_153649-ue1bdvif/files/code/show-o2/train_mixed_modality_simple.py | 844 [32m+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++[m
+ show-o2/wandb/run-20250702_153649-ue1bdvif/files/config.yaml                                 | 300 [32m++++++++++++++++++++++++[m
+ show-o2/wandb/run-20250702_153649-ue1bdvif/files/output.log                                  |  35 [32m+++[m
+ show-o2/wandb/run-20250702_153649-ue1bdvif/files/requirements.txt                            | 207 [32m+++++++++++++++++[m
+ show-o2/wandb/run-20250702_153649-ue1bdvif/files/wandb-metadata.json                         |  43 [32m++++[m
+ show-o2/wandb/run-20250702_153649-ue1bdvif/files/wandb-summary.json                          |   1 [32m+[m
+ show-o2/wandb/run-20250702_153649-ue1bdvif/logs/debug-core.log                               |   1 [32m+[m
+ show-o2/wandb/run-20250702_153649-ue1bdvif/logs/debug-internal.log                           |  13 [32m++[m
+ show-o2/wandb/run-20250702_153649-ue1bdvif/logs/debug.log                                    |  23 [32m++[m
+ show-o2/wandb/run-20250702_153649-ue1bdvif/run-ue1bdvif.wandb                                | Bin [31m0[m -> [32m10756[m bytes
+ show-o2/wandb/run-20250702_153810-br1vrbsp/files/code/show-o2/inference_mixed_modality.py    | 266 [32m+++++++++++++++++++++[m
+ show-o2/wandb/run-20250702_153810-br1vrbsp/files/config.yaml                                 | 194 [32m++++++++++++++++[m
+ show-o2/wandb/run-20250702_153810-br1vrbsp/files/output.log                                  |  29 [32m+++[m
+ show-o2/wandb/run-20250702_153810-br1vrbsp/files/requirements.txt                            | 207 [32m+++++++++++++++++[m
+ show-o2/wandb/run-20250702_153810-br1vrbsp/files/wandb-metadata.json                         |  47 [32m++++[m
+ show-o2/wandb/run-20250702_153810-br1vrbsp/files/wandb-summary.json                          |   1 [32m+[m
+ show-o2/wandb/run-20250702_153810-br1vrbsp/logs/debug-core.log                               |   1 [32m+[m
+ show-o2/wandb/run-20250702_153810-br1vrbsp/logs/debug-internal.log                           |  13 [32m++[m
+ show-o2/wandb/run-20250702_153810-br1vrbsp/logs/debug.log                                    |  22 [32m++[m
+ show-o2/wandb/run-20250702_153810-br1vrbsp/run-br1vrbsp.wandb                                | Bin [31m0[m -> [32m7639[m bytes
+ show-o2/wandb/run-20250702_153913-hkfr3lot/files/code/show-o2/train_mixed_modality_simple.py | 844 [32m+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++[m
+ show-o2/wandb/run-20250702_153913-hkfr3lot/files/config.yaml                                 | 300 [32m++++++++++++++++++++++++[m
+ show-o2/wandb/run-20250702_153913-hkfr3lot/files/output.log                                  |  35 [32m+++[m
+ show-o2/wandb/run-20250702_153913-hkfr3lot/files/requirements.txt                            | 207 [32m+++++++++++++++++[m
+ show-o2/wandb/run-20250702_153913-hkfr3lot/files/wandb-metadata.json                         |  43 [32m++++[m
+ show-o2/wandb/run-20250702_153913-hkfr3lot/files/wandb-summary.json                          |   1 [32m+[m
+ show-o2/wandb/run-20250702_153913-hkfr3lot/logs/debug-core.log                               |   1 [32m+[m
+ show-o2/wandb/run-20250702_153913-hkfr3lot/logs/debug-internal.log                           |  13 [32m++[m
+ show-o2/wandb/run-20250702_153913-hkfr3lot/logs/debug.log                                    |  23 [32m++[m
+ show-o2/wandb/run-20250702_153913-hkfr3lot/run-hkfr3lot.wandb                                | Bin [31m0[m -> [32m10633[m bytes
+ show-o2/wandb/run-20250705_162112-cwyft8qx/files/code/show-o2/inference_mixed_modality.py    | 266 [32m+++++++++++++++++++++[m
+ show-o2/wandb/run-20250705_162112-cwyft8qx/files/config.yaml                                 | 201 [32m++++++++++++++++[m
+ show-o2/wandb/run-20250705_162112-cwyft8qx/files/output.log                                  |  29 [32m+++[m
+ show-o2/wandb/run-20250705_162112-cwyft8qx/files/requirements.txt                            | 212 [32m+++++++++++++++++[m
+ show-o2/wandb/run-20250705_162112-cwyft8qx/files/wandb-metadata.json                         |  50 [32m++++[m
+ show-o2/wandb/run-20250705_162112-cwyft8qx/files/wandb-summary.json                          |   1 [32m+[m
+ show-o2/wandb/run-20250705_162112-cwyft8qx/logs/debug-core.log                               |   1 [32m+[m
+ show-o2/wandb/run-20250705_162112-cwyft8qx/logs/debug-internal.log                           |  13 [32m++[m
+ show-o2/wandb/run-20250705_162112-cwyft8qx/logs/debug.log                                    |  22 [32m++[m
+ show-o2/wandb/run-20250705_162112-cwyft8qx/run-cwyft8qx.wandb                                | Bin [31m0[m -> [32m7715[m bytes
+ show-o2/wandb/run-20250705_164132-j1ktncah/files/code/show-o2/inference_mixed_modality.py    | 266 [32m+++++++++++++++++++++[m
+ show-o2/wandb/run-20250705_164132-j1ktncah/files/config.yaml                                 | 201 [32m++++++++++++++++[m
+ show-o2/wandb/run-20250705_164132-j1ktncah/files/output.log                                  |  29 [32m+++[m
+ show-o2/wandb/run-20250705_164132-j1ktncah/files/requirements.txt                            | 212 [32m+++++++++++++++++[m
+ show-o2/wandb/run-20250705_164132-j1ktncah/files/wandb-metadata.json                         |  50 [32m++++[m
+ show-o2/wandb/run-20250705_164132-j1ktncah/files/wandb-summary.json                          |   1 [32m+[m
+ show-o2/wandb/run-20250705_164132-j1ktncah/logs/debug-core.log                               |   1 [32m+[m
+ show-o2/wandb/run-20250705_164132-j1ktncah/logs/debug-internal.log                           |  13 [32m++[m
+ show-o2/wandb/run-20250705_164132-j1ktncah/logs/debug.log                                    |  22 [32m++[m
+ show-o2/wandb/run-20250705_164132-j1ktncah/run-j1ktncah.wandb                                | Bin [31m0[m -> [32m7566[m bytes
+ show-o2/wandb/run-20250705_164305-f3stxq7j/files/code/show-o2/inference_mixed_modality.py    | 266 [32m+++++++++++++++++++++[m
+ show-o2/wandb/run-20250705_164305-f3stxq7j/files/config.yaml                                 | 201 [32m++++++++++++++++[m
+ show-o2/wandb/run-20250705_164305-f3stxq7j/files/output.log                                  |  29 [32m+++[m
+ show-o2/wandb/run-20250705_164305-f3stxq7j/files/requirements.txt                            | 212 [32m+++++++++++++++++[m
+ show-o2/wandb/run-20250705_164305-f3stxq7j/files/wandb-metadata.json                         |  50 [32m++++[m
+ show-o2/wandb/run-20250705_164305-f3stxq7j/files/wandb-summary.json                          |   1 [32m+[m
+ show-o2/wandb/run-20250705_164305-f3stxq7j/logs/debug-core.log                               |   1 [32m+[m
+ show-o2/wandb/run-20250705_164305-f3stxq7j/logs/debug-internal.log                           |  13 [32m++[m
+ show-o2/wandb/run-20250705_164305-f3stxq7j/logs/debug.log                                    |  22 [32m++[m
+ show-o2/wandb/run-20250705_164305-f3stxq7j/run-f3stxq7j.wandb                                | Bin [31m0[m -> [32m7570[m bytes
+ show-o2/wandb/run-20250705_165416-sac87s6g/files/code/show-o2/inference_mmu.py               | 180 [32m+++++++++++++++[m
+ show-o2/wandb/run-20250705_165416-sac87s6g/files/config.yaml                                 | 184 [32m+++++++++++++++[m
+ show-o2/wandb/run-20250705_165416-sac87s6g/files/output.log                                  |  29 [32m+++[m
+ show-o2/wandb/run-20250705_165416-sac87s6g/files/requirements.txt                            | 212 [32m+++++++++++++++++[m
+ show-o2/wandb/run-20250705_165416-sac87s6g/files/wandb-metadata.json                         |  47 [32m++++[m
+ show-o2/wandb/run-20250705_165416-sac87s6g/files/wandb-summary.json                          |   1 [32m+[m
+ show-o2/wandb/run-20250705_165416-sac87s6g/logs/debug-core.log                               |   1 [32m+[m
+ show-o2/wandb/run-20250705_165416-sac87s6g/logs/debug-internal.log                           |  13 [32m++[m
+ show-o2/wandb/run-20250705_165416-sac87s6g/logs/debug.log                                    |  22 [32m++[m
+ show-o2/wandb/run-20250705_165416-sac87s6g/run-sac87s6g.wandb                                | Bin [31m0[m -> [32m7109[m bytes
+ show-o2/wandb/run-20250706_011114-g6ic09f1/files/code/show-o2/inference_mmu.py               | 180 [32m+++++++++++++++[m
+ show-o2/wandb/run-20250706_011114-g6ic09f1/files/config.yaml                                 | 184 [32m+++++++++++++++[m
+ show-o2/wandb/run-20250706_011114-g6ic09f1/files/output.log                                  |  29 [32m+++[m
+ show-o2/wandb/run-20250706_011114-g6ic09f1/files/requirements.txt                            | 212 [32m+++++++++++++++++[m
+ show-o2/wandb/run-20250706_011114-g6ic09f1/files/wandb-metadata.json                         |  47 [32m++++[m
+ show-o2/wandb/run-20250706_011114-g6ic09f1/files/wandb-summary.json                          |   1 [32m+[m
+ show-o2/wandb/run-20250706_011114-g6ic09f1/logs/debug-core.log                               |   1 [32m+[m
+ show-o2/wandb/run-20250706_011114-g6ic09f1/logs/debug-internal.log                           |  13 [32m++[m
+ show-o2/wandb/run-20250706_011114-g6ic09f1/logs/debug.log                                    |  22 [32m++[m
+ show-o2/wandb/run-20250706_011114-g6ic09f1/run-g6ic09f1.wandb                                | Bin [31m0[m -> [32m7197[m bytes
+ show-o2/wandb/run-20250706_011138-oxp8giwo/files/code/show-o2/inference_mmu.py               | 180 [32m+++++++++++++++[m
+ show-o2/wandb/run-20250706_011138-oxp8giwo/files/config.yaml                                 | 184 [32m+++++++++++++++[m
+ show-o2/wandb/run-20250706_011138-oxp8giwo/files/output.log                                  |   2 [32m+[m
+ show-o2/wandb/run-20250706_011138-oxp8giwo/files/requirements.txt                            | 212 [32m+++++++++++++++++[m
+ show-o2/wandb/run-20250706_011138-oxp8giwo/files/wandb-metadata.json                         |  47 [32m++++[m
+ show-o2/wandb/run-20250706_011138-oxp8giwo/files/wandb-summary.json                          |   1 [32m+[m
+ show-o2/wandb/run-20250706_011138-oxp8giwo/logs/debug-core.log                               |   1 [32m+[m
+ show-o2/wandb/run-20250706_011138-oxp8giwo/logs/debug-internal.log                           |  13 [32m++[m
+ show-o2/wandb/run-20250706_011138-oxp8giwo/logs/debug.log                                    |  22 [32m++[m
+ show-o2/wandb/run-20250706_011138-oxp8giwo/run-oxp8giwo.wandb                                | Bin [31m0[m -> [32m160377[m bytes
+ training/__pycache__/__init__.cpython-310.pyc                                                | Bin [31m0[m -> [32m188[m bytes
+ training/__pycache__/data.cpython-310.pyc                                                    | Bin [31m0[m -> [32m8519[m bytes
+ training/__pycache__/imagenet_dataset.cpython-310.pyc                                        | Bin [31m0[m -> [32m2208[m bytes
+ training/__pycache__/prompting_utils.cpython-310.pyc                                         | Bin [31m0[m -> [32m12483[m bytes
+ training/__pycache__/utils.cpython-310.pyc                                                   | Bin [31m0[m -> [32m5431[m bytes
+ training/train_w_clip_vit.py                                                                 |  52 [32m+++[m[31m--[m
+ 235 files changed, 14175 insertions(+), 88 deletions(-)
