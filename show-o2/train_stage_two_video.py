@@ -570,17 +570,17 @@ def main():
                     # save_dataloader_state(accelerator.process_index, train_dataloader_t2i, config.experiment.output_dataloader_state_dir)
 
                 if (global_step + 1) % config.experiment.generate_every == 0 and accelerator.is_main_process:
-                    # generate_videos(
-                    #     model,
-                    #     vae_model,
-                    #     text_tokenizer,
-                    #     config,
-                    #     global_step + 1,
-                    #     accelerator.device,
-                    #     weight_type,
-                    #     sampler,
-                    #     showo_token_ids,
-                    # )
+                    generate_videos(
+                        model,
+                        vae_model,
+                        text_tokenizer,
+                        config,
+                        global_step + 1,
+                        accelerator.device,
+                        weight_type,
+                        sampler,
+                        showo_token_ids,
+                    )
 
                     generate_images(
                         model,

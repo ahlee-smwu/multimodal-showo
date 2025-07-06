@@ -98,10 +98,6 @@ class ImageTextDataset(Dataset):
     def __getitem__(self, idx: int) -> Optional[Dict[str, Any]]:
         try:
             data = self.anno[idx]
-<<<<<<< HEAD
-=======
-
->>>>>>> origin/main
             img = Image.open(data['path'])
             width, height = img.size
 
@@ -131,12 +127,7 @@ class ImageTextDataset(Dataset):
                 return self.__getitem__(idx + 1)
 
             img = Image.fromarray(img)
-<<<<<<< HEAD
             img_clip = self.image_transform(img, resolution=self.clip_image_size, mean=self.clip_mean, std=self.clip_std)
-=======
-            img_clip = self.image_transform(img, resolution=self.clip_image_size, mean=self.clip_mean,
-                                            std=self.clip_std)
->>>>>>> origin/main
             img = self.image_transform(img, resolution=self.image_size)
 
             text = data['prompt'].replace('\n', '')
@@ -181,26 +172,15 @@ class ImageTextDataset(Dataset):
             print(e)
             return self.__getitem__(idx + 1)
 
-<<<<<<< HEAD
     def collate_fn(self, batch):
-=======
-    def collate_fn(self, batch: List[Dict[str, Any]]) -> Dict[str, torch.Tensor]:
->>>>>>> origin/main
         batched = collections.defaultdict(list)
         for data in batch:
             for k, v in data.items():
                 batched[k].append(v)
         for k, v in batched.items():
-<<<<<<< HEAD
             if k not in ('texts', 'data_type'):
                 batched[k] = torch.stack(v, dim=0)
 
-=======
-            if k in ('texts', 'data_type'):
-                batched[k] = [_[0] for _ in v]
-            else:
-                batched[k] = torch.stack(v, dim=0)
->>>>>>> origin/main
         return batched
 
 
@@ -267,11 +247,7 @@ def example():
     loader = create_imagetext_dataloader(
         '/mnt/bn/vgfm2/test_mlx/xavier/code/0923/show-o-next-v3/datasets/openimages_data.jsonl',
         text_tokenizer=text_tokenizer,
-<<<<<<< HEAD
         batch_size=4,
-=======
-        batch_size=2,
->>>>>>> origin/main
         max_seq_len=1024,
         image_size=432,
         latent_height=27,
@@ -283,15 +259,9 @@ def example():
         random_und_or_gen=0.0,
         num_workers=0,
         showo_token_ids=showo_token_ids,
-<<<<<<< HEAD
         system=("",
                 "",
                 "")
-=======
-        system=("system\nYou are a helpful assistant.<|im_end|>",
-                "\n<|im_start|>user\n Generate a high-quality image based on the text prompt: ",
-                "\n<|im_start|>assistant\n")
->>>>>>> origin/main
     )
 
     loader2 = create_imagetext_dataloader(
@@ -309,27 +279,17 @@ def example():
         random_und_or_gen=0.0,
         num_workers=0,
         showo_token_ids=showo_token_ids,
-<<<<<<< HEAD
         system=("",
                 "",
                 "")
-=======
-        system=("system\nYou are a helpful assistant.<|im_end|>",
-                "\n<|im_start|>user\n Generate a high-quality image based on the text prompt: ",
-                "\n<|im_start|>assistant\n")
->>>>>>> origin/main
     )
 
     from datasets.mixed_dataloader import MixedDataLoader
 
     mixed_loader = MixedDataLoader(
         loader_list=[loader, loader2],
-<<<<<<< HEAD
         # samp_probs=[0.8, 0.2],
         # loader_list=[loader],
-=======
-        samp_probs=[0.8, 0.2],
->>>>>>> origin/main
         accumulation=1,
         mode='concat_min_size'
     )

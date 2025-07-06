@@ -25,10 +25,6 @@ import torch.utils.data as data
 import copy
 from PIL import Image
 IGNORE_INDEX = -100
-<<<<<<< HEAD
-=======
-# IGNORE_INDEX = 100
->>>>>>> origin/main
 
 class MMUDataset(data.Dataset):
     def __init__(
@@ -89,14 +85,6 @@ class MMUDataset(data.Dataset):
         with open(annotation_path, 'r') as f:
             self.samples = json.load(f)
 
-<<<<<<< HEAD
-=======
-        if self.stage == "tuning":
-            txt_annotation_path = "/mnt/bn/mllm-all-datasets/datasets/LLaVA-OneVision-Data-SI/llavaov-si-txt-0.5m-v1.json"
-            with open(txt_annotation_path, 'r') as f:
-                self.samples.extend(json.load(f))
-
->>>>>>> origin/main
         self.loader = loader
 
         print(f"LLaVA dataset loaded. {self.__len__()} images!")

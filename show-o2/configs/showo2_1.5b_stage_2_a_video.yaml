@@ -12,7 +12,7 @@ experiment:
     max_train_examples_mmu: 100000000 # 100M
     save_every: 10000000
     eval_every: 2500
-    generate_every: 10000000
+    generate_every: 500 #10000000
     log_every: 50
     log_grad_norm_every: 500
     resume_from_checkpoint: 'latest'
@@ -20,7 +20,7 @@ experiment:
 model:
     vae_model:
         type: "wan21"
-        pretrained_model_path: "/mnt/bn/vgfm2/test_mlx/xavier/code/0923/show-o-next-v5/Wan2.1_VAE.pth"
+        pretrained_model_path: "Wan_VAE_model/Wan2.1_VAE.pth"
 
     showo:
         model_name: "Showo2"
@@ -61,7 +61,7 @@ dataset:
         is_clip_encoder: False
         default_system_prompt: ""
         add_caption_prompt: True
-        validation_prompts_file: "prompts/t2i_prompts.txt"
+        validation_prompts_file: "prompts/t2i_prompts.txt" #need video prompts
         shuffle_buffer_size: 1000
         num_workers: 6
         pin_memory: True

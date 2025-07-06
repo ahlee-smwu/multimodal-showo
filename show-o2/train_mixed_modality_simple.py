@@ -39,10 +39,7 @@ from models.lr_schedulers import get_scheduler
 from models.my_logging import set_verbosity_info, set_verbosity_error
 from models.misc import prepare_gen_input, get_text_tokenizer, get_weight_type
 from torch.nn.attention.flex_attention import flex_attention
-<<<<<<< HEAD
 os.environ["TOKENIZERS_PARALLELISM"] = "true"
-=======
->>>>>>> origin/main
 
 if torch.cuda.is_available():
     flex_attention = torch.compile(flex_attention)
@@ -285,7 +282,7 @@ def main():
             del state_dict
 
     # Combine these dataloaders into a single iterable model
-    mixed_loader = MixedDataLoader(
+    mixed_loader = MixedDataLoader(     # for stochastic 인듯?
         loader_list=[train_dataloader_mixed_modal],
         samp_probs=config.dataset.samp_probs,
         accumulation=config.dataset.accumulation,
@@ -399,6 +396,11 @@ def main():
             xt = xt.reshape(b * n, c, h, w)
             t = t.reshape(b * n)
 
+        # xt: noised output
+        # t: time step
+        # ut: target, velocity or noise of diffusion
+        # recon_images: recon img for visualization
+        # masks: mask for indicate which image token is processed, text and other image are not processed(stochastic)
         return xt, t, ut, recons_images, masks
 
     batch_time_m = AverageMeter()
@@ -453,6 +455,7 @@ def main():
                                                 max_seq_len=text_tokens.size(1),
                                                 device=accelerator.device,
                                                 )
+            # ntp: text, flow: image loss
 
             # Gather the losses across all processes for logging (if we use distributed training).
             avg_loss_ntp = accelerator.gather(loss_ntp.repeat(total_batch_size_per_gpu)).mean()
@@ -582,11 +585,7 @@ def generate_images(
 
     num_image_tokens, num_video_tokens, max_seq_len, max_text_len, image_latent_dim, patch_size, latent_width, \
     latent_height, pad_id, bos_id, eos_id, boi_id, eoi_id, bov_id, eov_id, image_pad_id, video_pad_id, guidance_scale \
-<<<<<<< HEAD
         = get_hyper_params(config, text_tokenizer, showo_token_ids)
-=======
-        = get_hyper_params(config, text_tokenizer, showo_token_ids, is_hq=True)
->>>>>>> origin/main
 
     batch_text_tokens, batch_text_tokens_null, batch_modality_positions, batch_modality_positions_null = \
         prepare_gen_input(
