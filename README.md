@@ -38,7 +38,6 @@ Zhijie Chen<sup>2</sup>&nbsp;
 
 
 ## News
-<<<<<<< HEAD
 * **[2025-07-05]** **Fix some issues related to visualization of generated images during training.**
 * **[2025-07-05]** We release the training and inference code for simple mixed-modality generation.
 =======
