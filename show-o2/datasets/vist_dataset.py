@@ -171,8 +171,6 @@ class VISTDataset(Dataset):
         return len(self.samples)
 
     def __getitem__(self, idx: int) -> Optional[Dict[str, Any]]:
-        # print(f"__getitem__ called with idx: {idx}") #3123
-        # print(f"Invalid idx {idx} for dataset length {len(self.samples)}") #3123, 390
         try:
             # print("\n++++++++++++++++++++++++++++++++++++++++idx", idx)
             # print("\n++++++++++++++++++++++++++++++++++++++++samples", len(self.samples))
