@@ -208,12 +208,12 @@ def main():
     # This means that the dataloading is not deterministic, but it's fast and efficient.
 
     def create_dataloader(dataset, batch_size, collate_fn):
-        if accelerator.num_processes > 1:
+        if accelerator.num_processes > 2:
             sampler = DistributedSampler(dataset,
                                          num_replicas=accelerator.num_processes,
                                          rank=accelerator.process_index,
                                          shuffle=True,
-                                         drop_last=True,
+                                         drop_last=False, #train:True
                                          )
             shuffle = False
         else:
@@ -223,7 +223,7 @@ def main():
         dataloader = DataLoader(dataset, batch_size=batch_size,
                                                   sampler=sampler, collate_fn=collate_fn,
                                                   shuffle=shuffle, num_workers=dataset_config.num_workers,
-                                                  drop_last=True)
+                                                  drop_last=False) #train:True
         return dataloader
 
     dataset = VISTDataset(
@@ -241,8 +241,9 @@ def main():
         system=("", "", ""),
         max_num_images=preproc_config.max_num_images,
     )
+    print("Dataset length:", len(dataset))
     train_dataloader_mixed_modal = create_dataloader(dataset,
-                                                     config.training.batch_size_mixed_modal,
+                                                     config.training.batch_size_mixed_modal, #1
                                                      dataset.collate_fn)
 
     num_update_steps_per_epoch = len(train_dataloader_mixed_modal)
@@ -282,7 +283,7 @@ def main():
             del state_dict
 
     # Combine these dataloaders into a single iterable model
-    mixed_loader = MixedDataLoader(     # for stochastic 인듯?
+    mixed_loader = MixedDataLoader(
         loader_list=[train_dataloader_mixed_modal],
         samp_probs=config.dataset.samp_probs,
         accumulation=config.dataset.accumulation,
@@ -396,11 +397,6 @@ def main():
             xt = xt.reshape(b * n, c, h, w)
             t = t.reshape(b * n)
 
-        # xt: noised output
-        # t: time step
-        # ut: target, velocity or noise of diffusion
-        # recon_images: recon img for visualization
-        # masks: mask for indicate which image token is processed, text and other image are not processed(stochastic)
         return xt, t, ut, recons_images, masks
 
     batch_time_m = AverageMeter()
@@ -455,7 +451,6 @@ def main():
                                                 max_seq_len=text_tokens.size(1),
                                                 device=accelerator.device,
                                                 )
-            # ntp: text, flow: image loss
 
             # Gather the losses across all processes for logging (if we use distributed training).
             avg_loss_ntp = accelerator.gather(loss_ntp.repeat(total_batch_size_per_gpu)).mean()

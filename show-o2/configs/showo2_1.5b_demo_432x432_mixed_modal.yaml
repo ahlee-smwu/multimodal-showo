@@ -17,7 +17,7 @@ model:
     showo:
         model_name: "Showo2"
         load_from_showo: False
-        pretrained_model_path: ""
+        pretrained_model_path: "show-o2-1.5B/pytorch_model.bin"
         llm_model_path: "Qwen/Qwen2.5-1.5B-Instruct"
         llm_vocab_size: null # will be updated when setting the tokenizer in other code files
         hidden_size: 1536

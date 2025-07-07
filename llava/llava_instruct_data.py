@@ -138,7 +138,7 @@ class LLaVAInstructDataset(Dataset):
         # data_file_path = "/mnt/bn/vgfm2/test_dit/llava_v1_5_mix665k.json"
         # self.image_root = "/mnt/bn/vgfm2/test_dit/tuning_data"
         '''AvaMERG dataset'''
-        data_file_path = "AvaMERG_images/AvaMERG-test.json"
+        data_file_path = "AvaMERG_images/AvaMERG_img.json"
         self.image_root = "AvaMERG_images"
 
         with open(data_file_path, 'r') as f:

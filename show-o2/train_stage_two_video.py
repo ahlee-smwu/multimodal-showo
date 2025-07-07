@@ -43,7 +43,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "true"
 if torch.cuda.is_available():
     flex_attention = torch.compile(flex_attention)
 
-from datasets import create_imagetext_dataloader, MixedDataLoader, MMUDataset
+from datasets import create_imagetext_dataloader, MixedDataLoader, MMUDataset, MMUVideoDataset
 from utils import get_config, flatten_omega_conf, AverageMeter, denorm, denorm_vid, get_hyper_params, \
     path_to_llm_name, _freeze_params
 
@@ -295,6 +295,25 @@ def main():
         config.training.max_train_steps * config.lr_scheduler.params.warmup_ratio)
     num_update_steps_per_epoch = math.ceil(len(dataset_mmu) / total_batch_size)
     num_train_epochs = math.ceil(config.training.max_train_steps / num_update_steps_per_epoch)
+
+    # Data for video
+    dataset_vid = MMUVideoDataset(
+        root="/mnt/data/videos/",
+        annotation_path="/mnt/data/annotations/video_annotations.json",
+        text_tokenizer=your_tokenizer,
+        showo_token_ids=your_showo_token_ids,
+        image_size=384,
+        num_frames=8,
+    )
+
+    train_dataloader_vid = create_dataloader(dataset_vid, config.training.batch_size_vid, dataset_vid.collate_fn)
+    total_batch_size_vid = config.training.batch_size_vid * accelerator.num_processes * config.training.gradient_accumulation_steps
+    config.training.max_train_steps_vid = len(dataset_vid) // (
+                config.training.batch_size_vid * accelerator.num_processes) * config.training.gradient_accumulation_steps
+    config.lr_scheduler.params.warmup_steps_vid = int(
+        config.training.max_train_steps_vid * config.lr_scheduler.params.warmup_ratio)
+    num_update_steps_per_epoch_vid = math.ceil(len(dataset_vid) / total_batch_size_vid)
+    num_train_epochs_vid = math.ceil(config.training.max_train_steps_vid / num_update_steps_per_epoch_vid)
 
     ##################################
     #         MODEL RESUME          #
