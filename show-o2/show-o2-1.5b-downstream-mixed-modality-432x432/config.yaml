@@ -1,7 +1,7 @@
 wandb:
   entity: null
   resume: auto
-  run_id: vjwdlim5
+  run_id: 7gz7oxff
 experiment:
   project: show-o2-2b-stage-1
   name: show-o2-1.5b-downstream-mixed-modality-432x432
