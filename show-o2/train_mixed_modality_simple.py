@@ -213,7 +213,7 @@ def main():
                                          num_replicas=accelerator.num_processes,
                                          rank=accelerator.process_index,
                                          shuffle=True,
-                                         drop_last=False, #train:True
+                                         drop_last=True
                                          )
             shuffle = False
         else:
@@ -223,7 +223,7 @@ def main():
         dataloader = DataLoader(dataset, batch_size=batch_size,
                                                   sampler=sampler, collate_fn=collate_fn,
                                                   shuffle=shuffle, num_workers=dataset_config.num_workers,
-                                                  drop_last=False) #train:True
+                                                  drop_last=True)
         return dataloader
 
     dataset = VISTDataset(
