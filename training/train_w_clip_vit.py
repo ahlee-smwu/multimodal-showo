@@ -39,7 +39,7 @@ from accelerate.utils import DistributedType, set_seed
 
 from training.data import Text2ImageDataset
 from training.imagenet_dataset import ImageNetDataset
-# from parquet import RefinedWebDataset
+from parquet import RefinedWebDataset
 
 from models import Showo, MAGVITv2, CLIPVisionTower, get_mask_chedule
 from training.prompting_utils import UniversalPrompting, create_attention_mask_predict_next, \
@@ -283,7 +283,7 @@ def main():
     dataset_config = config.dataset.params
 
     # Data for generation
-    '''if config.dataset.gen_type == "t2i":
+    if config.dataset.gen_type == "t2i":
         dataset = Text2ImageDataset(
             train_shards_path_or_url=dataset_config.train_t2i_shards_path_or_url,
             tokenizer=None,  # we want to get raw texts
@@ -334,7 +334,7 @@ def main():
         num_train_epochs = math.ceil(config.training.max_train_steps / num_update_steps_per_epoch)
 
     else:
-        raise ValueError(f"Unsupported dataset type {config.dataset.type}")'''
+        raise ValueError(f"Unsupported dataset type {config.dataset.type}")
 
     # Data for llava instructional tuning, 576 is the number of feature vectors extracted from CLIP-ViT(336px)
     if config.dataset.und_type == "llava_pretrain":
@@ -365,19 +365,19 @@ def main():
         raise NotImplementedError(f"Unsupported dataset type {config.dataset.und_type}")
 
     # LLM pure text dataset: RefinedWeb
-    '''dataset_lm = RefinedWebDataset(data_path=dataset_config.train_lm_shards_path_or_url,
+    dataset_lm = RefinedWebDataset(data_path=dataset_config.train_lm_shards_path_or_url,
                                    rank=accelerator.process_index,
                                    world_size=accelerator.num_processes,
                                    num_workers=dataset_config.num_workers)
 
     train_dataloader_lm = torch.utils.data.DataLoader(dataset_lm, batch_size=config.training.batch_size_lm,
                                                       sampler=None, collate_fn=dataset_lm.collate_fn,
-                                                      num_workers=dataset_config.num_workers)'''
+                                                      num_workers=dataset_config.num_workers)
 
     # Combine these dataloaders into a single iterable model
     iterables = {
-        # "t2i_flow": train_dataloader_t2i,
-        # "lm_flow": train_dataloader_lm,
+        "t2i_flow": train_dataloader_t2i,
+        "lm_flow": train_dataloader_lm,
         "mmu_flow": train_dataloader_mmu,
     }
 
@@ -398,7 +398,7 @@ def main():
             path = os.path.join(config.experiment.output_dir, path)
 
             global_step = int(os.path.basename(path).split("-")[1])
-            # first_epoch = global_step // num_update_steps_per_epoch
+            first_epoch = global_step // num_update_steps_per_epoch
 
             accelerator.print(f"Resuming from checkpoint {path}/unwrapped_model/pytorch_model.bin")
             state_dict = torch.load(f'{path}/unwrapped_model/pytorch_model.bin', map_location="cpu")
@@ -461,18 +461,18 @@ def main():
     data_time_m = AverageMeter()
     end = time.time()
 
-    for epoch in range(first_epoch, config.training.epochs):
+    for epoch in range(first_epoch, num_train_epochs):
         model.train()
         for batch, batch_idx, dataloader_idx in combined_dataloader:
             # for loss calculation
-            # batch_size_t2i = batch["t2i_flow"]["images"].shape[0]
-            # batch_size_lm = len(batch["lm_flow"]["input_ids"])
+            batch_size_t2i = batch["t2i_flow"]["images"].shape[0]
+            batch_size_lm = len(batch["lm_flow"]["input_ids"])
             batch_size_mmu = batch["mmu_flow"]["images"].shape[0]
 
             # *-------*-------*-------*-------*-------*-------*-------*-------*-------*-------*-------*
             # Build formatted sequences for class-conditional/text-to-image generation
             # *-------*-------*-------*-------*-------*-------*-------*-------*-------*-------*-------*
-            '''pixel_values, texts = batch["t2i_flow"]["images"], batch["t2i_flow"]["input_ids"]
+            pixel_values, texts = batch["t2i_flow"]["images"], batch["t2i_flow"]["input_ids"]
             pixel_values = pixel_values.to(accelerator.device, non_blocking=True)
             data_time_m.update(time.time() - end)
 
@@ -503,7 +503,7 @@ def main():
             attention_mask_lm = attention_mask_lm.to(mask_dtype)
             attention_mask = torch.cat([attention_mask, attention_mask_lm], dim=0)
             input_ids = torch.cat((input_ids, input_ids_lm.to(input_ids.device)), dim=0)
-            labels = torch.cat((labels, labels_lm.to(input_ids.device)), dim=0)'''
+            labels = torch.cat((labels, labels_lm.to(input_ids.device)), dim=0)
 
             # *-------*-------*-------*-------*-------*-------*-------*-------*-------*-------*-------*
             # Build formatted sequences for captioning/multimodal understanding
@@ -568,7 +568,6 @@ def main():
                 ], dim=1).long()
 
                 images_feat = vision_tower(pixel_values_mmu).to(images_feat_dtype)
-                images_feat = images_feat.to(dtype=torch.float32)  # datatype tune: bfloat16->float32
                 if hasattr(model, 'module'):
                     images_embeddings = model.module.mm_projector(images_feat)
                     text_embeddings = model.module.showo.model.embed_tokens(input_ids_mmu)
@@ -594,32 +593,29 @@ def main():
 
             attention_mask_mmu = create_attention_mask_for_mmu_vit(input_embeddings, system_prompt_len=SYSTEM_PROMPT_LEN)
             attention_mask_mmu = attention_mask_mmu.to(mask_dtype)
-            attention_mask = attention_mask_mmu
-            # attention_mask = torch.cat([attention_mask, attention_mask_mmu], dim=0) # for only mmu task
+            attention_mask = torch.cat([attention_mask, attention_mask_mmu], dim=0)
 
             if hasattr(model, 'module'):
                 text_embeddings_img_text = model.module.showo.model.embed_tokens(input_ids)
             else:
-                # text_embeddings_img_text = model.showo.model.embed_tokens(input_ids)
-                pass # for only mmu task
-            # input_embeddings = torch.cat([text_embeddings_img_text, input_embeddings], dim=0)
+                text_embeddings_img_text = model.showo.model.embed_tokens(input_ids)
+            input_embeddings = torch.cat([text_embeddings_img_text, input_embeddings], dim=0)
 
-            # devicelabels = torch.cat((labels, labels_mmu.to(input_ids.device)), dim=0)
-            labels = labels_mmu
+            labels = torch.cat((labels, labels_mmu.to(input_ids.device)), dim=0)
 
             if global_step == 0 and epoch == 0:
-                # logger.info("Input ids: {}".format(input_ids))
+                logger.info("Input ids: {}".format(input_ids))
                 logger.info("Labels: {}".format(labels))
 
             with accelerator.accumulate(model):
                 logits, loss_t2i, loss_lm, loss_mmu = model(
-                    input_ids=input_ids_mmu,    # check for usage, intend nothing, org: input_ids
+                    input_ids=input_ids,
                     input_embeddings=input_embeddings,
                     attention_mask=attention_mask,
                     labels=labels,
                     label_smoothing=config.training.label_smoothing,
-                    batch_size_t2i=config.training.batch_size_t2i,  # org:batch_size_t2i
-                    batch_size_lm=config.training.batch_size_lm,    # org: batch_size_lm
+                    batch_size_t2i=batch_size_t2i,
+                    batch_size_lm=batch_size_lm,
                     batch_size_mmu=batch_size_mmu,
                     max_seq_length=config.dataset.preprocessing.max_seq_length,
                 )
@@ -632,7 +628,7 @@ def main():
                        config.training.lm_coeff * loss_lm + \
                        config.training.mmu_coeff * loss_mmu
 
-                # avg_masking_rate = accelerator.gather(mask_prob.repeat(config.training.batch_size_t2i)).mean()
+                avg_masking_rate = accelerator.gather(mask_prob.repeat(config.training.batch_size_t2i)).mean()
 
                 accelerator.backward(loss)
 
@@ -668,7 +664,7 @@ def main():
                         "step_loss_mmu": avg_loss_mmu.item(),
                         "step_loss_lm": avg_loss_lm.item(),
                         "lr": lr_scheduler.get_last_lr()[0],
-                        # "avg_masking_rate": avg_masking_rate.item(),
+                        "avg_masking_rate": avg_masking_rate.item(),
                         "samples/sec/gpu": samples_per_second_per_gpu,
                         "data_time": data_time_m.val,
                         "batch_time": batch_time_m.val,

@@ -2,16 +2,14 @@ wandb:
   entity: null
   resume: 'auto'
 
-# 410k -- 512 res mixedmodal
-
 experiment:
-    project: "showo2-2b-stage-1"
-    name: "showo2-1.5b-downstream-mixed-modality-432x432"
-    output_dir: "showo2-1.5b-downstream-mixed-modality-432x432"
-    output_dataloader_state_dir: null
-    max_train_examples_t2i: 60000000 # 10M HQ generation data
-    max_train_examples_mmu: null
-    save_every: 2000
+    project: "showo2-7b-stage-1-release"
+    name: "showo2-7b-stage-1-a"
+    output_dir: "showo2-7b-stage-1-a"
+    output_dataloader_state_dir: "128gpus_dataloader_states"
+    max_train_examples_t2i: 66000000
+    max_train_examples_mmu: 66000000
+    save_every: 10000
     generate_every: 1000
     log_every: 50
     log_grad_norm_every: 500
@@ -24,11 +22,11 @@ model:
 
     showo:
         model_name: "Showo2"
-        load_from_showo: False #True
-        pretrained_model_path: "showlab/show-o2-1.5B"
-        llm_model_path: "Qwen/Qwen2.5-1.5B-Instruct"
+        load_from_showo: False
+        pretrained_model_path: ""
+        llm_model_path: "Qwen/Qwen2.5-7B-Instruct"
         llm_vocab_size: null # will be updated when setting the tokenizer in other code files
-        hidden_size: 1536
+        hidden_size: 3584
         image_latent_dim: 16
         image_latent_height: 27
         image_latent_width: 27
@@ -41,9 +39,9 @@ model:
         clip_latent_dim: 1152
         add_qk_norm: True
         add_time_embeds: True
-        frozen_params: [ 'image_embedder_und', 'und_trans', 'showo', 'position_embedding' ]
-#        frozen_params: null
-        params_not_load: null
+        frozen_params: ['image_embedder_und', 'und_trans', 'showo', 'position_embedding']
+        # used to only load pre-trained flow_head from the 1.5B show-o2 model
+        params_not_load: ['image_embedder_gen', 'showo', 'fusion_proj', 'diff_proj', 'time_embed_proj']
 
     clip:
         pretrained_model_path: "google/siglip-so400m-patch14-384"
@@ -53,28 +51,26 @@ model:
 dataset:
     samp_probs: null
     accumulation: 1
-    mixed_loader_mode: "sequential_max_size_cycle"
+    mixed_loader_mode: "concat_max_size_cycle"
     params:
-        train_mixed_modal_shards_path_or_url: "../AvaMERG_images"
-        annotation_path: "../AvaMERG_images/test.json" #"../AvaMERG_images/AvaMERG_img_mixed.json"
+        train_t2i_shards_path_or_url: "path/to/your.jsonl"
+        train_mmu_shards_path_or_url: "path/to/your.jsonl"
         is_clip_encoder: False
         default_system_prompt: ""
         add_caption_prompt: True
         validation_prompts_file: "prompts/t2i_prompts.txt"
         shuffle_buffer_size: 1000
-        num_workers: 0
+        num_workers: 6
         pin_memory: True
         persistent_workers: True
 
     preprocessing:
-        max_seq_length: 1280
+        max_seq_length: 1024
         max_hq_seq_length: 4352
-        max_mixed_modal_seq_length: 4352
-        max_video_seq_length: 4352
+        max_mixed_modal_seq_length: 5120
         resolution: 432
-        mixed_modal_resolution: 432
-        video_resolution: 432
         hq_resolution: 1024
+        mixed_modal_resolution: 432
         num_t2i_image_tokens: 729
         num_mmu_image_tokens: 729
         num_hq_image_tokens: 4096
@@ -82,17 +78,12 @@ dataset:
         num_video_tokens: 3645
         latent_height: ${model.showo.image_latent_height}
         latent_width: ${model.showo.image_latent_width}
-        video_latent_height: ${model.showo.image_latent_height}
-        video_latent_width: ${model.showo.image_latent_width}
         hq_latent_height: ${model.showo.hq_image_latent_height}
         hq_latent_width: ${model.showo.hq_image_latent_width}
         mixed_modal_latent_height: ${model.showo.hq_image_latent_height}
         mixed_modal_latent_width: ${model.showo.hq_image_latent_width}
-        min_res: [ 256, 256 ]
+        min_res: [256, 256] # minimum image resolution
         random_und_or_gen: 0.0
-        max_num_images: 4
-        max_num_videos: 4
-        num_frames: 2
 
 optimizer:
     name: adamw
@@ -108,7 +99,7 @@ lr_scheduler:
     scheduler: "constant_with_warmup"
     params:
         learning_rate: ${optimizer.params.learning_rate}
-        warmup_steps: 0
+        warmup_steps: 2000
 
 transport:
     path_type: "Linear"
@@ -128,13 +119,12 @@ transport:
 
 training:
     gradient_accumulation_steps: 1
-    batch_size: 1
-    batch_size_mixed_modal: 1
-    batch_size_video: 1
+    batch_size_t2i: 6
+    batch_size_mmu: 2
     mixed_precision: "bf16"
     enable_tf32: True
-    seed: 10000
-    max_train_steps: 40000
+    seed: 10086
+    max_train_steps: 150000
     cond_dropout_prob: 0.1
     label_smoothing: 0.0
     max_grad_norm: 1.0

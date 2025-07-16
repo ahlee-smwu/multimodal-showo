@@ -61,7 +61,6 @@ class LLaVAPretrainCaptioningDataset(Dataset):
 
         self.tokenizer = tokenizer
 
-        '''original code'''
         data_file_path = "/mnt/bn/vgfm2/test_dit/blip_laion_cc_sbu_558k.json"
         self.image_root = "/mnt/bn/vgfm2/test_dit/pretraining_data"
 

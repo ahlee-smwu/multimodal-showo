@@ -7,10 +7,7 @@ experiment:
     project: "showo2-1.5b-stage-2-release"
     name: "showo2-1.5b-stage-2-b"
     output_dir: "showo2-1.5b-stage-2-b"
-<<<<<<< HEAD
     output_dataloader_state_dir: "64gpus_dataloader_states"
-=======
->>>>>>> origin/main
     max_train_examples_t2i: 100000000 # 100M
     max_train_examples_mmu: 100000000 # 100M
     save_every: 10000000
@@ -27,10 +24,6 @@ model:
 
     showo:
         model_name: "Showo2"
-<<<<<<< HEAD
-=======
-        vision_encoder: "clip"
->>>>>>> origin/main
         load_from_showo: False
         pretrained_model_path: ""
         llm_model_path: "Qwen/Qwen2.5-1.5B-Instruct"
