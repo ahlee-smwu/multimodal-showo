@@ -348,10 +348,16 @@ def get_text_tokenizer(model_path, add_showo_tokens=True, return_showo_token_ids
             text_tokenizer.add_tokens('<image>')
         elif llm_name == "qwen2_5":
             text_tokenizer.add_tokens('<image>')
+            text_tokenizer.add_tokens('<|im_start|>') # add
             text_tokenizer.add_tokens('<|vid_start|>')
             text_tokenizer.add_tokens('<|vid_end|>')
         else:
             raise NotImplementedError
+
+        # BOS/EOS 명시적으로 설정
+        if llm_name == "qwen2_5":
+            text_tokenizer.bos_token = "<|im_start|>"
+            # text_tokenizer.eos_token = "<|vid_end|>"
 
     if return_showo_token_ids:
         if llm_name == "llama3":
@@ -368,7 +374,8 @@ def get_text_tokenizer(model_path, add_showo_tokens=True, return_showo_token_ids
             }
         elif llm_name == "qwen2_5":
             showo_token_ids = {
-                "bos_id": text_tokenizer.get_vocab()["<|im_start|>"],
+                "bos_id": text_tokenizer.convert_tokens_to_ids(text_tokenizer.bos_token),
+                # "bos_id": text_tokenizer.get_vocab()["<|im_start|>"],
                 "eos_id": text_tokenizer.eos_token_id,
                 "boi_id": text_tokenizer.get_vocab()["<|vision_start|>"],
                 "eoi_id": text_tokenizer.get_vocab()["<|vision_end|>"],
@@ -378,6 +385,7 @@ def get_text_tokenizer(model_path, add_showo_tokens=True, return_showo_token_ids
                 "vid_pad_id": text_tokenizer.get_vocab()["<|video_pad|>"],
                 "img_id": text_tokenizer.get_vocab()["<image>"],
             }
+
         else:
             raise NotImplementedError
 

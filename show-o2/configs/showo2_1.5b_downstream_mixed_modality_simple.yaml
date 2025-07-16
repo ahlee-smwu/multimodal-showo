@@ -24,7 +24,7 @@ model:
 
     showo:
         model_name: "Showo2"
-        load_from_showo: True
+        load_from_showo: False #True
         pretrained_model_path: "showlab/show-o2-1.5B"
         llm_model_path: "Qwen/Qwen2.5-1.5B-Instruct"
         llm_vocab_size: null # will be updated when setting the tokenizer in other code files
@@ -55,14 +55,14 @@ dataset:
     accumulation: 1
     mixed_loader_mode: "sequential_max_size_cycle"
     params:
-        train_mixed_modal_shards_path_or_url: "/path/to/your/images/train"
-        annotation_path: "/path/to/your/vist_train_annotations.json"
+        train_mixed_modal_shards_path_or_url: "../AvaMERG_images"
+        annotation_path: "../AvaMERG_images/test.json" #"../AvaMERG_images/AvaMERG_img_mixed.json"
         is_clip_encoder: False
         default_system_prompt: ""
         add_caption_prompt: True
         validation_prompts_file: "prompts/t2i_prompts.txt"
         shuffle_buffer_size: 1000
-        num_workers: 6
+        num_workers: 0
         pin_memory: True
         persistent_workers: True
 
@@ -70,8 +70,10 @@ dataset:
         max_seq_length: 1280
         max_hq_seq_length: 4352
         max_mixed_modal_seq_length: 4352
+        max_video_seq_length: 4352
         resolution: 432
         mixed_modal_resolution: 432
+        video_resolution: 432
         hq_resolution: 1024
         num_t2i_image_tokens: 729
         num_mmu_image_tokens: 729
@@ -80,6 +82,8 @@ dataset:
         num_video_tokens: 3645
         latent_height: ${model.showo.image_latent_height}
         latent_width: ${model.showo.image_latent_width}
+        video_latent_height: ${model.showo.image_latent_height}
+        video_latent_width: ${model.showo.image_latent_width}
         hq_latent_height: ${model.showo.hq_image_latent_height}
         hq_latent_width: ${model.showo.hq_image_latent_width}
         mixed_modal_latent_height: ${model.showo.hq_image_latent_height}
@@ -87,6 +91,8 @@ dataset:
         min_res: [ 256, 256 ]
         random_und_or_gen: 0.0
         max_num_images: 4
+        max_num_videos: 4
+        num_frames: 2
 
 optimizer:
     name: adamw
@@ -123,8 +129,8 @@ transport:
 training:
     gradient_accumulation_steps: 1
     batch_size: 1
-    batch_size_mmu: 1
-    batch_size_mixed_modal: 2
+    batch_size_mixed_modal: 1
+    batch_size_video: 1
     mixed_precision: "bf16"
     enable_tf32: True
     seed: 10000

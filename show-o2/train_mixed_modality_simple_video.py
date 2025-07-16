@@ -45,6 +45,7 @@ if torch.cuda.is_available():
     flex_attention = torch.compile(flex_attention)
 
 from datasets import create_imagetext_dataloader, MixedDataLoader, VISTDataset
+from datasets.video_dataset_vist_based import VideoDataset
 from utils import get_config, flatten_omega_conf, AverageMeter, denorm, denorm_vid, get_hyper_params, \
     path_to_llm_name, _freeze_params
 
@@ -208,12 +209,12 @@ def main():
     # This means that the dataloading is not deterministic, but it's fast and efficient.
 
     def create_dataloader(dataset, batch_size, collate_fn):
-        if accelerator.num_processes > 2:
+        if accelerator.num_processes > 1:
             sampler = DistributedSampler(dataset,
                                          num_replicas=accelerator.num_processes,
                                          rank=accelerator.process_index,
                                          shuffle=True,
-                                         drop_last=True
+                                         drop_last=True,
                                          )
             shuffle = False
         else:
@@ -226,7 +227,7 @@ def main():
                                                   drop_last=True)
         return dataloader
 
-    dataset = VISTDataset(
+    '''dataset = VISTDataset(
         dataset_config.train_mixed_modal_shards_path_or_url,
         anno_path=dataset_config.annotation_path,
         text_tokenizer=text_tokenizer,
@@ -241,12 +242,35 @@ def main():
         system=("", "", ""),
         max_num_images=preproc_config.max_num_images,
     )
-    print("Dataset length:", len(dataset))
     train_dataloader_mixed_modal = create_dataloader(dataset,
-                                                     config.training.batch_size_mixed_modal, #1
+                                                     config.training.batch_size_mixed_modal,
                                                      dataset.collate_fn)
 
     num_update_steps_per_epoch = len(train_dataloader_mixed_modal)
+    num_train_epochs = math.ceil(config.training.max_train_steps / num_update_steps_per_epoch)'''
+
+    '''Video dataset'''
+    video_dataset = VideoDataset(
+        root=dataset_config.train_mixed_modal_shards_path_or_url,  # 비디오 파일들이 있는 디렉토리
+        anno_path=dataset_config.annotation_path,  # .json annotation 경로
+        text_tokenizer=text_tokenizer,
+        image_size=preproc_config.video_resolution,  # 예: 384
+        max_seq_len=preproc_config.max_video_seq_length,  # 예: 3840
+        num_image_tokens=preproc_config.num_video_tokens,  # 예: 576
+        latent_width=preproc_config.video_latent_width,  # 예: 24
+        latent_height=preproc_config.video_latent_height,  # 예: 24
+        cond_dropout_prob=config.training.cond_dropout_prob,
+        num_frames=preproc_config.num_frames,  # 예: 8
+        max_num_videos=preproc_config.max_num_videos,  # 예: 4
+        showo_token_ids=showo_token_ids,
+        system=("", "", ""),  # 또는 원하는 system prompt
+    )
+    train_dataloader_video = create_dataloader(
+        video_dataset,
+        config.training.batch_size_video,
+        video_dataset.collate_fn,
+    )
+    num_update_steps_per_epoch = len(train_dataloader_video)
     num_train_epochs = math.ceil(config.training.max_train_steps / num_update_steps_per_epoch)
 
     ##################################
@@ -283,8 +307,8 @@ def main():
             del state_dict
 
     # Combine these dataloaders into a single iterable model
-    mixed_loader = MixedDataLoader(
-        loader_list=[train_dataloader_mixed_modal],
+    mixed_loader = MixedDataLoader(     # for stochastic 인듯?
+        loader_list=[train_dataloader_video],
         samp_probs=config.dataset.samp_probs,
         accumulation=config.dataset.accumulation,
         mode=config.dataset.mixed_loader_mode
@@ -397,6 +421,11 @@ def main():
             xt = xt.reshape(b * n, c, h, w)
             t = t.reshape(b * n)
 
+        # xt: noised output
+        # t: time step
+        # ut: target, velocity or noise of diffusion
+        # recon_images: recon img for visualization
+        # masks: mask for indicate which image token is processed, text and other image are not processed(stochastic)
         return xt, t, ut, recons_images, masks
 
     batch_time_m = AverageMeter()
@@ -451,6 +480,7 @@ def main():
                                                 max_seq_len=text_tokens.size(1),
                                                 device=accelerator.device,
                                                 )
+            # ntp: text, flow: image loss
 
             # Gather the losses across all processes for logging (if we use distributed training).
             avg_loss_ntp = accelerator.gather(loss_ntp.repeat(total_batch_size_per_gpu)).mean()
@@ -578,13 +608,13 @@ def generate_images(
     with open(config.dataset.params.validation_prompts_file, "r") as f:
         prompts = f.read().splitlines()[:config.training.batch_size_t2i]
 
-    num_t2i_image_tokens, num_mmu_image_tokens, num_video_tokens, max_seq_len, max_text_len, image_latent_dim, patch_size, latent_width, \
+    num_image_tokens, num_video_tokens, max_seq_len, max_text_len, image_latent_dim, patch_size, latent_width, \
     latent_height, pad_id, bos_id, eos_id, boi_id, eoi_id, bov_id, eov_id, image_pad_id, video_pad_id, guidance_scale \
         = get_hyper_params(config, text_tokenizer, showo_token_ids)
 
     batch_text_tokens, batch_text_tokens_null, batch_modality_positions, batch_modality_positions_null = \
         prepare_gen_input(
-            prompts, text_tokenizer, num_t2i_image_tokens, bos_id, eos_id, boi_id, eoi_id, pad_id, image_pad_id,
+            prompts, text_tokenizer, num_image_tokens, bos_id, eos_id, boi_id, eoi_id, pad_id, image_pad_id,
             max_text_len, device
         )
 

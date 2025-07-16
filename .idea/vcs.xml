@@ -2,5 +2,8 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/AvaMERG_images/reerfrewf" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/show-o-w-clip-vit" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/show-o2/show-o2-1.5B" vcs="Git" />
   </component>
 </project>
