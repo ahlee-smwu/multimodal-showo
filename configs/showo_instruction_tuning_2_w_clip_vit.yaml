@@ -82,9 +82,9 @@ lr_scheduler:
 training:
     gradient_accumulation_steps: 1
     noise_type: "mask"
-    batch_size_t2i: 0 # org: 3
-    batch_size_lm: 0 # org: 1
-    batch_size_mmu: 1 # org: 4
+    batch_size_t2i: 3
+    batch_size_lm: 1
+    batch_size_mmu: 4
     mixed_precision: "bf16"
     enable_tf32: True
     seed: 10086
@@ -99,4 +99,3 @@ training:
     t2i_coeff: 1.0
     lm_coeff: 0.1
     mmu_coeff: 1.0
-    epochs: 10

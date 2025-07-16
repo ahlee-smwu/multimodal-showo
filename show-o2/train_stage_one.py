@@ -36,6 +36,7 @@ from models.lr_schedulers import get_scheduler
 from models.my_logging import set_verbosity_info, set_verbosity_error
 from models.misc import prepare_gen_input, get_text_tokenizer, get_weight_type
 from torch.nn.attention.flex_attention import flex_attention
+
 os.environ["TOKENIZERS_PARALLELISM"] = "true"
 
 if torch.cuda.is_available():
@@ -163,7 +164,8 @@ def main():
     config.model.showo.llm_vocab_size = len(text_tokenizer)
 
     if config.model.showo.load_from_showo:
-        model = Showo2Qwen2_5.from_pretrained(config.model.showo.pretrained_model_path, use_safetensors=False).to(accelerator.device)
+        model = Showo2Qwen2_5.from_pretrained(config.model.showo.pretrained_model_path, use_safetensors=False).to(
+            accelerator.device)
     else:
         model = Showo2Qwen2_5(**config.model.showo).to(accelerator.device)
 
@@ -616,13 +618,13 @@ def generate_images(
     with open(config.dataset.params.validation_prompts_file, "r") as f:
         prompts = f.read().splitlines()[:config.training.batch_size_t2i]
 
-    num_image_tokens, num_video_tokens, max_seq_len, max_text_len, image_latent_dim, patch_size, latent_width, \
+    num_t2i_image_tokens, num_mmu_image_tokens, num_video_tokens, max_seq_len, max_text_len, image_latent_dim, patch_size, latent_width, \
     latent_height, pad_id, bos_id, eos_id, boi_id, eoi_id, bov_id, eov_id, image_pad_id, video_pad_id, guidance_scale \
-        = get_hyper_params(config, text_tokenizer, showo_token_ids)
+        = get_hyper_params(config, text_tokenizer, showo_token_ids, is_hq=False)  # hq means high resolution
 
     batch_text_tokens, batch_text_tokens_null, batch_modality_positions, batch_modality_positions_null = \
         prepare_gen_input(
-            prompts, text_tokenizer, num_image_tokens, bos_id, eos_id, boi_id, eoi_id, pad_id, image_pad_id,
+            prompts, text_tokenizer, num_t2i_image_tokens, bos_id, eos_id, boi_id, eoi_id, pad_id, image_pad_id,
             max_text_len, device
         )
 

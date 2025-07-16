@@ -87,7 +87,7 @@ if __name__ == '__main__':
     for i, file_name in enumerate(tqdm(file_list)):
         image_path = os.path.join(config.mmu_image_root, file_name)
         image_ori = Image.open(image_path).convert("RGB")
-        image = image_transform(image_ori, resolution=config.dataset.params.resolution).to(device) # pre-processing
+        image = image_transform(image_ori, resolution=config.dataset.params.resolution).to(device)
         image = image.unsqueeze(0)
         images.append(image)
 
