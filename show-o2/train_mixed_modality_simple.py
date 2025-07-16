@@ -208,12 +208,12 @@ def main():
     # This means that the dataloading is not deterministic, but it's fast and efficient.
 
     def create_dataloader(dataset, batch_size, collate_fn):
-        if accelerator.num_processes > 1:
+        if accelerator.num_processes > 2:
             sampler = DistributedSampler(dataset,
                                          num_replicas=accelerator.num_processes,
                                          rank=accelerator.process_index,
                                          shuffle=True,
-                                         drop_last=True,
+                                         drop_last=True
                                          )
             shuffle = False
         else:
@@ -241,8 +241,9 @@ def main():
         system=("", "", ""),
         max_num_images=preproc_config.max_num_images,
     )
+    print("Dataset length:", len(dataset))
     train_dataloader_mixed_modal = create_dataloader(dataset,
-                                                     config.training.batch_size_mixed_modal,
+                                                     config.training.batch_size_mixed_modal, #1
                                                      dataset.collate_fn)
 
     num_update_steps_per_epoch = len(train_dataloader_mixed_modal)

@@ -176,7 +176,7 @@ class Showo2Qwen2_5(ModelMixin, ConfigMixin):
         T = 0
         input_embeds = self.showo.model.embed_tokens(text_tokens)
         dtype = input_embeds.dtype
-        if len(image_latents.shape) != 4:
+        if len(image_latents.shape) != 4: # video
             b, c, T, h, w = image_latents.shape
         else:
             b, c, h, w = image_latents.shape
@@ -280,7 +280,7 @@ class Showo2Qwen2_5(ModelMixin, ConfigMixin):
             # multimoidal understanding and generatiopn
             input_embeds = self.showo.model.embed_tokens(text_tokens)
             dtype = input_embeds.dtype
-            if len(image_latents.shape) != 4:
+            if len(image_latents.shape) != 4: # video
                 b, c, T, h, w = image_latents.shape
             else:
                 b, c, h, w = image_latents.shape

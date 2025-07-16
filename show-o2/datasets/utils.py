@@ -231,3 +231,91 @@ def resize_and_pad_image(image, target_resolution):
     new_image.paste(resized_image, (paste_x, paste_y))
 
     return new_image
+
+from torchvision import transforms
+def video_transform(video_tensor, resolution=256):
+    # video_tensor: (C, T, H, W)
+    frames = []
+    for i in range(video_tensor.shape[1]):
+        frame = video_tensor[:, i, :, :]  # (C, H, W)
+        # frame은 tensor 이므로 ToPILImage 후 Resize -> ToTensor 후 Normalize 등
+        frame_pil = transforms.ToPILImage()(frame)
+        frame_resized = transforms.Resize(resolution)(frame_pil)
+        frame_tensor = transforms.ToTensor()(frame_resized)
+        frames.append(frame_tensor)
+    # (T, C, H, W) -> (C, T, H, W)
+    video_transformed = torch.stack(frames, dim=1)
+    return video_transformed
+
+import torch
+import copy
+
+import torch
+import copy
+
+def format_interleaved_sequence_video(
+    video_frame_lists, text_token_list,
+    bos_id, eos_id, boi_id, eoi_id, pad_id, img_pad_id,
+    num_image_tokens_per_frame, num_frames,
+    max_seq_len, max_num_videos,
+    system_tokens=None, system_token_len=0
+):
+    """
+    Format a sequence of videos and texts into a single token sequence.
+
+    video_frame_lists: List[List[Tensor]], each inner list is frames of a video
+    text_token_list: List[List[int]]
+    """
+    text_tokens = []
+    text_labels = []
+    modality_positions = []
+
+    cur_len = 1 + system_token_len  # BOS + optional system tokens
+
+    for txt_token, video_frames in zip(text_token_list, video_frame_lists):
+        if txt_token is not None:
+            text_tokens.extend(txt_token)
+            text_labels.extend(copy.deepcopy(txt_token))
+            cur_len += len(txt_token)
+
+        if video_frames is not None:
+            total_img_tokens = num_image_tokens_per_frame * num_frames
+            text_tokens.extend([boi_id] + [img_pad_id] * total_img_tokens + [eoi_id])
+            text_labels.extend([boi_id] + [img_pad_id] * total_img_tokens + [eoi_id])
+
+            modality_positions.append((cur_len + 1, total_img_tokens))  # skip <|img_start|>
+            cur_len += 1 + total_img_tokens + 1
+
+    # Add special tokens
+    if system_token_len == 0:
+        text_tokens = [bos_id] + text_tokens + [eos_id]
+        text_labels = [bos_id] + text_labels + [eos_id]
+    else:
+        if system_tokens is None or len(system_tokens) != 3:
+            raise ValueError("Expected system_tokens of length 3 when system_token_len > 0")
+        text_tokens = [bos_id] + system_tokens[0] + system_tokens[1] + system_tokens[2] + text_tokens + [eos_id]
+        text_labels = [bos_id] + [-100] * system_token_len + text_labels + [eos_id]
+
+    # Padding
+    text_len = len(text_tokens)
+    if text_len > max_seq_len:
+        raise ValueError(f"Sequence length {text_len} exceeds max_seq_len {max_seq_len}")
+
+    pad_len = max_seq_len - text_len
+    text_tokens += [pad_id] * pad_len
+    text_labels += [-100] * pad_len
+
+    # Convert to tensors with correct dtype
+    text_tokens = torch.tensor(text_tokens, dtype=torch.long)
+    text_labels = torch.tensor(text_labels, dtype=torch.long)
+
+    # Pad modality_positions
+    if len(modality_positions) < max_num_videos:
+        modality_positions += [(0, 0)] * (max_num_videos - len(modality_positions))
+    modality_positions = torch.tensor(modality_positions, dtype=torch.long)
+
+    # Masks
+    text_mask = ((text_tokens != pad_id) & (text_tokens != img_pad_id)).long()
+    image_mask = (text_tokens == img_pad_id).long()
+
+    return text_tokens, text_labels, modality_positions, text_mask, image_mask

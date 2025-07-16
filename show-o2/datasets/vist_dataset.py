@@ -172,6 +172,10 @@ class VISTDataset(Dataset):
 
     def __getitem__(self, idx: int) -> Optional[Dict[str, Any]]:
         try:
+            # print("\n++++++++++++++++++++++++++++++++++++++++idx", idx)
+            # print("\n++++++++++++++++++++++++++++++++++++++++samples", len(self.samples))
+            # print("Length from __len__():", len(dataset))
+            # print("Actual length of samples:", len(dataset.samples))
             anno = self.samples[idx]
             if len(anno['images']) == 0:
                 return self.__getitem__(idx + 1)
@@ -222,15 +226,23 @@ class VISTDataset(Dataset):
         except Exception:  # pylint: disable=broad-except
             return self.__getitem__(idx + 1)
 
-    def collate_fn(self, batch: List[Dict[str, Any]]) -> Dict[str, torch.Tensor]:
-        """Collate function to batch data."""
+    def collate_fn(self, batch: List[Optional[Dict[str, Any]]]) -> Dict[str, torch.Tensor]:
+        """Collate function to batch data safely (ignores None)."""
+        batch = [b for b in batch if b is not None]  # None 제거
+        if not batch:
+            return {}  # 빈 배치 방지
         batched = collections.defaultdict(list)
         for data in batch:
             for key, value in data.items():
                 batched[key].append(value)
+
         for key, value in batched.items():
-            if key not in ('texts', 'data_type'):
-                batched[key] = torch.stack(value, dim=0)
+            if key not in ('texts', 'data_type'):  # 리스트 유지
+                try:
+                    batched[key] = torch.stack(value, dim=0)
+                except Exception as e:
+                    print(f"[collate_fn] Failed to stack key={key} with error: {e}")
+                    raise
         return batched
 
 
