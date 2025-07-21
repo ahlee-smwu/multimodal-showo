@@ -1,10 +1,8 @@
-show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432
-show-o2/2nd_show-o2-1.5b-downstream-mixed-modality-432x432
-show-o2/3rd_show-o2-1.5b-downstream-mixed-modality-432x432
+show-o2/showlab/*
+show-o2/show-o2-1.5B/
 show-o-w-clip-vit/
 show-o2/Wan_VAE_model/Wan2.1_VAE.pth
-show-o2/AvaMERG_img_inter/
-show-o2/AvaMERG_img_test/
-show-o2/AvaMERG_video
 checkpoints/
 wandb/
+.idea/
+*.iml
