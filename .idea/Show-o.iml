@@ -1,8 +1,57 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="PYTHON_MODULE" version="4">
   <component name="NewModuleRootManager">
-    <content url="file://$MODULE_DIR$" />
-    <orderEntry type="jdk" jdkName="show-o2" jdkType="Python SDK" />
+    <content url="file://$MODULE_DIR$">
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-1000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-10000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-11000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-12000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-13000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-14000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-15000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-16000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-17000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-18000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-19000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-2000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-20000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-21000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-22000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-23000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-24000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-25000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-26000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-27000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-28000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-29000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-3000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-30000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-31000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-32000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-33000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-34000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-35000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-36000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-37000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-38000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-39000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-4000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-40000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-5000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-6000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-7000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-8000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-9000" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/1st_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-final" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/2nd_show-o2-1.5b-downstream-mixed-modality-432x432" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/3rd_show-o2-1.5b-downstream-mixed-modality-432x432" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/AvaMERG_img_inter" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/AvaMERG_img_test" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/AvaMERG_video" />
+      <excludeFolder url="file://$MODULE_DIR$/show-o2/wandb" />
+    </content>
+    <orderEntry type="jdk" jdkName="showo2" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="PyDocumentationSettings">
