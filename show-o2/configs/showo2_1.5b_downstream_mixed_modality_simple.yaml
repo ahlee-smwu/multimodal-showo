@@ -6,16 +6,16 @@ wandb:
 
 experiment:
     project: "show-o2-2b-stage-1"
-    name: "show-o2-1.5b-downstream-mixed-modality-432x432"
-    output_dir: "show-o2-1.5b-downstream-mixed-modality-432x432"
+    name: "3rd_show-o2-1.5b-downstream-mixed-modality-432x432"
+    output_dir: "3rd_show-o2-1.5b-downstream-mixed-modality-432x432"
     output_dataloader_state_dir: null
     max_train_examples_t2i: 60000000 # 10M HQ generation data
     max_train_examples_mmu: null
-    save_every: 2000
+    save_every: 500
     generate_every: 1000
     log_every: 50
     log_grad_norm_every: 500
-    resume_from_checkpoint: 'latest'
+    resume_from_checkpoint: #'latest'
 
 model:
     vae_model:
@@ -24,7 +24,7 @@ model:
 
     showo:
         model_name: "Showo2"
-        load_from_showo: False #True
+        load_from_showo: True #False
         pretrained_model_path: "showlab/show-o2-1.5B"
         llm_model_path: "Qwen/Qwen2.5-1.5B-Instruct"
         llm_vocab_size: null # will be updated when setting the tokenizer in other code files
@@ -41,7 +41,7 @@ model:
         clip_latent_dim: 1152
         add_qk_norm: True
         add_time_embeds: True
-        frozen_params: [ 'image_embedder_und', 'und_trans', 'showo', 'position_embedding' ]
+        frozen_params: [ 'image_embedder_und', 'und_trans', 'showo', 'position_embedding'] # , 'image_embedder_gen', 'fusion_proj'
 #        frozen_params: null
         params_not_load: null
 
@@ -55,8 +55,8 @@ dataset:
     accumulation: 1
     mixed_loader_mode: "sequential_max_size_cycle"
     params:
-        train_mixed_modal_shards_path_or_url: "../AvaMERG_images"
-        annotation_path: "../AvaMERG_images/test.json" #"../AvaMERG_images/AvaMERG_img_mixed.json"
+        train_mixed_modal_shards_path_or_url: "./AvaMERG_img_inter/image_v5_0_128"
+        annotation_path: "./AvaMERG_img_inter/train_inter_final.json"
         is_clip_encoder: False
         default_system_prompt: ""
         add_caption_prompt: True
@@ -105,10 +105,12 @@ optimizer:
         epsilon: 1e-8
 
 lr_scheduler:
-    scheduler: "constant_with_warmup"
+    scheduler: "polynomial" # "constant_with_warmup"
     params:
         learning_rate: ${optimizer.params.learning_rate}
         warmup_steps: 0
+#        min_lr: 1e-6
+        power: 0.5
 
 transport:
     path_type: "Linear"
@@ -130,11 +132,11 @@ training:
     gradient_accumulation_steps: 1
     batch_size: 1
     batch_size_mixed_modal: 1
-    batch_size_video: 1
+    batch_size_video: 0
     mixed_precision: "bf16"
     enable_tf32: True
     seed: 10000
-    max_train_steps: 40000
+    max_train_steps: 3000
     cond_dropout_prob: 0.1
     label_smoothing: 0.0
     max_grad_norm: 1.0
