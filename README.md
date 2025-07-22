@@ -40,8 +40,6 @@ Zhijie Chen<sup>2</sup>&nbsp;
 ## News
 * **[2025-07-05]** **Fix some issues related to visualization of generated images during training.**
 * **[2025-07-05]** We release the training and inference code for simple mixed-modality generation.
-=======
->>>>>>> origin/main
 * **[2025-06-27]** We release the training code for multimodal understanding and generation.
 * **[2025-06-25]** We thank team [OneIG-Bench](https://github.com/OneIG-Bench/OneIG-Benchmark) for evaluating Show-o2 models on their new benchmark, in which our models have achieved leading performance in terms of Alignment and Reasoning metrics. The leaderboard is maintained [here](https://oneig-bench.github.io/).
 
@@ -272,6 +270,19 @@ Reach us with this [Discord channel](https://discord.gg/p6k7XupM) or the WeChat 
 <p align="center">
 <img src="docs/wechat_qa_3.jpg" width="256">
 </p> 
+
+
+### Request new features? Willing to contribute?
+We welcome your bravo new ideas and contributions! If you would like to see any new features in Show-o, or you want to contribute to this project, please fill in [this form](https://docs.google.com/forms/d/e/1FAIpQLSdBlfEWgC2sNBsczyxtzIDE9lJ726ALzyRVn19nc8hJ-ymi2Q/viewform?usp=sf_link)!
+
+**Existing Requested Features**
+- [ ] Mixed-modal generation
+- [ ] Support training on more datasets
+- [ ] Visual tokenizer training
+
+<p align="center">
+<img src="docs/show-o-want-u.png" width="512">
+</p>
 
 
 ### Citation

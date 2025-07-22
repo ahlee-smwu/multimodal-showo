@@ -14,11 +14,8 @@
 </div>
 
 ## News
-<<<<<<< HEAD
 * **[2025-07-05]** **Fix some issues related to visualization of generated images during training.**
 * **[2025-07-05]** We release the training and inference code for simple mixed-modality generation.
-=======
->>>>>>> origin/main
 * **[2025-06-27]** We release the training code for multimodal understanding and generation.
 * **[2025-06-25]** We thank team [OneIG-Bench](https://github.com/OneIG-Bench/OneIG-Benchmark) for evaluating Show-o2 models on their new benchmark, in which our models have achieved leading performance in terms of Alignment and Reasoning metrics. The leaderboard is maintained [here](https://oneig-bench.github.io/).
 
@@ -69,6 +66,7 @@ Below is an overview of **Show-o2**. We perform the unified learning of multimod
 - [X] Release the evaluation code.
 - [X] Release the training code.
 - [X] Release the models supporting image generation in a higher resolution (512x512 and 1024x1024) with better text rendering.
+- [X] Release the training and inference code for simple downstream mixed-modality generation.
 - [ ] Release the models supporting mixed-modality generation.
 - [ ] Release the models supporting image-to-video and text-to-video generation.
 
@@ -88,13 +86,9 @@ Login your wandb account on your machine or server.
 wandb login <your wandb keys>
 ```
 Download Wan2.1 3D causal VAE model weight [here](https://huggingface.co/Wan-AI/Wan2.1-T2V-14B/blob/main/Wan2.1_VAE.pth) and put it on the current directory.
-<<<<<<< HEAD
 ``` 
 wget https://huggingface.co/Wan-AI/Wan2.1-T2V-14B/resolve/main/Wan2.1_VAE.pth
 ```
-=======
-
->>>>>>> origin/main
 Demo for **Multimodal Understanding** and you can find the results on wandb.
 ```
 python3 inference_mmu.py config=configs/showo2_7b_demo_432x432.yaml \
@@ -130,46 +124,65 @@ python3 inference_t2i.py config=configs/showo2_7b_demo_432x432.yaml \
 # Generate images
 bash evaluation/sample_geneval.sh
 
-# Create an independent environment for GenEval (we use PyTorch 1.10.0)
+
+# Create an independent environment for GenEval
+conda create -n GenEval python=3.8 -y
+conda activate GenEval
+pip3 install torch==1.13.1+cu117 torchvision==0.14.1+cu117 torchaudio==0.13.1 --extra-index-url https://download.pytorch.org/whl/cu117
+
 git clone https://github.com/djghosh13/geneval.git
 cd geneval
-./evaluation/download_models.sh 'weights';
-git clone https://github.com/open-mmlab/mmdetection.git
-cd mmdetection; git checkout 2.x;
-pip3 install -v -e .;
-sudo pip3 install open-clip-torch;
-sudo pip3 install clip-benchmark;
-pip3 install -U openmim;
-mim install mmcv-full;
+bash ./evaluation/download_models.sh 'weights'
 
-# Evaluate
+pip3 install -U openmim
+mim install mmengine
+mim install "mmcv>=2.0.0"
+git clone https://github.com/open-mmlab/mmdetection.git
+cd mmdetection
+git checkout 2.x
+pip3 install -v -e .
+cd ..
+
+sudo pip3 install open-clip-torch
+sudo pip3 install clip-benchmark
+
+
+# Evaluation
 python3 evaluation/evaluate_images.py \
     "/path/to/your/generated/images" \
     --outfile "results.jsonl" \
     --model-path "./weights";
-python3 evaluation/summary_scores.py "results.jsonl";
+    
+python3 evaluation/summary_scores.py "results.jsonl"
 ```
+
 ### DPG-Bench
 ```
 # Generate images
 bash evaluation/sample_dpg.sh
 
-# Create an independent environment for DPG-Bench (we use PyTorch 2.5.1)
-pip3 install modelscope==1.22.2; (if encountering issues, try modelscope==1.20.0)
+
+# Create an independent environment for DPG-Bench
+conda create -n DPG-Bench python=3.10 -y
+conda activate DPG-Bench
+pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu121
+
+pip3 install modelscope==1.22.2 (if encountering issues, please try modelscope==1.20.0)
 pip3 install librosa==0.10.1
 pip3 install git+https://github.com/One-sixth/fairseq.git
-pip3 install opencv-python;
-pip3 install unicodedata2;
-pip3 install zhconv;
-pip3 install rapidfuzz;
-pip3 install numpy==1.23.5;
-pip3 install addict;
-pip3 install datasets==2.21.0;
-pip3 install simplejson;
-pip3 install sortedcontainers;
+pip3 install opencv-python
+pip3 install unicodedata2
+pip3 install zhconv
+pip3 install rapidfuzz
+pip3 install numpy==1.23.5
+pip3 install addict
+pip3 install datasets==2.21.0
+pip3 install simplejson
+pip3 install sortedcontainers
 
-# Evaluate
-cd evaluation;
+
+# Evaluation
+cd evaluation
 bash dist_eval.sh /path/to/your/generated/images image_resolution
 ```
 
@@ -206,22 +219,18 @@ Below is an example to train Show-o2 with 1.5B LLM parameters on one node with 8
 
 (As the code is manually cleaned based on our original codes without other inspection. Feel free to contact me if you encounter any issues)
 ### Data Preparation
-<<<<<<< HEAD
 We did use our `internal packages` to load large-scale data shards. For convenience, we here simply implement a dataset class (`./datasets`) based on torch `Dataset`. We recommend other packages like `webdataset` when loading large-scale datasets.
-=======
-We did use our `internal packages` to load large-scale data shards. For convenience, we here simply implement a dataset classes (`./datasets`) based on torch `Dataset`. We recommend other packages like `webdataset` when loading large-scale datasets.
->>>>>>> origin/main
 
 ### Stage-1
 Prepare a `.jsonl` annotation file for your image-text pairs in the format as follows and change the `path` in `./configs`:
 ```
 {
-    "image_path": "path/to/your/image1",
-    "prompt": "a description of the image1"
+    "path": "path/to/your/image",
+    "prompt": "image caption"
 }
 {
-    "image_path": "path/to/your/image2",
-    "prompt": "a description of the image2"
+    "path": "path/to/your/image",
+    "prompt": "image caption"
 }
 ```
 
@@ -235,19 +244,36 @@ Follow [LLaVA-OneVision](https://github.com/LLaVA-VL/LLaVA-NeXT/tree/main/script
 ``` 
 bash train_showo2_1.5b_stage2.sh
 ```
+To train 7B models, please refer to `train_showo2_7b_stage1.sh` and `train_showo2_7b_stage2.sh`.
 
 ### Add additional high-quality image generation, interleaved image-text, or video data
-<<<<<<< HEAD
 In our experiments, we add these kinds of additional data in stage-1 to enhance the base show-o2 models with more comprehensive capabilities. We will provide the scripts and code soon.
-=======
-In our experiments, we add additional these kinds of additional data in stage-1 to enhance the base show-o2 models with more comprehensive capabilities. We will provide the scripts and code soon.
->>>>>>> origin/main
 
 ### Simple downstream fine-tuning for mixed-modality generation
 More comprehensive training codes on interleaved image-text pairs will be provided soon. Here, we simply take the mixed-modality generation on [visual storytelling](https://visionandlanguage.net/VIST/index.html) dataset as an example. 
 
 Following the instructions to download the dataset visual storytelling data [here](https://visionandlanguage.net/VIST/dataset.html) and our processed annotation [here](https://huggingface.co/datasets/Sierkinhane/show-o2-data-annotations/blob/main/vist_train_annotations.json).
 
+The data annotation format is shown as follows:
+```
+[
+    {
+        "images": [
+            "path/to/your/image",
+            "path/to/your/image",
+            ...
+        ],
+        "captions": [
+            "image caption",
+            "image caption",
+            ...
+        ],
+    },
+    {
+        ...
+    },
+]
+```
 We use this config `conigs/showo2_1.5b_downstream_mixed_modality_simple.yaml` and set `frozen_params` as follows for the warm-up training:
 ``` 
 frozen_params: ['image_embedder_und', 'und_trans', 'showo', 'position_embedding']
@@ -268,13 +294,8 @@ accelerate launch --config_file ../accelerate_configs/8_gpus_deepspeed_zero2.yam
 **Mixed-modality Inference**. The model will automatically generate interleaved texts and images.
 ``` 
 CUDA_VISIBLE_DEVICES=0 python3 inference_mixed_modality.py config=configs/showo2_1.5b_demo_432x432_mixed_modal.yaml \
-<<<<<<< HEAD
-                       model_path=./show-o2-qwen2-5-1.5b-downstream-mixed-modality-432x432/checkpoint-50000/unwrapped_model/pytorch_model.bin \
+                       model_path=./showo2-qwen2-5-1.5b-downstream-mixed-modality-432x432/checkpoint-50000/unwrapped_model/pytorch_model.bin \
                        batch_size=1 guidance_scale=5.0 num_inference_steps=50;
-=======
-                         model_path=./show-o2-qwen2-5-1.5b-downstream-mixed-modality-432x432/checkpoint-50000/unwrapped_model/pytorch_model.bin \
-                         batch_size=4 guidance_scale=5.0 num_inference_steps=50;
->>>>>>> origin/main
 ```
 
 ### Citation

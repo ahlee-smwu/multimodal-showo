@@ -99,4 +99,3 @@ training:
     t2i_coeff: 1.0
     lm_coeff: 0.1
     mmu_coeff: 1.0
-    epochs: 20
