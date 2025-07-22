@@ -87,6 +87,9 @@ def main():
         accelerator.state.deepspeed_plugin.deepspeed_config["train_micro_batch_size_per_gpu"] = (
             total_batch_size_per_gpu
         )
+    print("[DEBUG] CUDA_VISIBLE_DEVICES:", os.environ.get("CUDA_VISIBLE_DEVICES"))
+    print("[DEBUG] torch.cuda.device_count():", torch.cuda.device_count())
+    print("[DEBUG] Accelerator processes:", accelerator.num_processes)
 
     #####################################
     # SETUP LOGGING, SEED and CONFIG    #
@@ -247,6 +250,7 @@ def main():
                                                      dataset.collate_fn)
 
     num_update_steps_per_epoch = len(train_dataloader_mixed_modal)
+    print('[DEBUG] num_update_steps_per_epoch:', num_update_steps_per_epoch)
     num_train_epochs = math.ceil(config.training.max_train_steps / num_update_steps_per_epoch)
 
     ##################################
@@ -295,6 +299,7 @@ def main():
         optimizer=optimizer,
         num_training_steps=config.training.max_train_steps - global_step,
         num_warmup_steps=config.lr_scheduler.params.warmup_steps,
+        power=config.lr_scheduler.params.power,
     )
 
     ##################################

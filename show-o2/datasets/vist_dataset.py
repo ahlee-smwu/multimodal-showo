@@ -121,18 +121,9 @@ class VISTDataset(Dataset):
     def _get_interleaved_data(
             self, anno: Dict[str, Any]
     ) -> Tuple[List[Optional[torch.Tensor]], List[Optional[List[int]]], List[str]]:
-        """Extracts interleaved image-text data from annotation.
-
-        Args:
-            anno: Annotation dictionary for a sample.
-
-        Returns:
-            Tuple of image list, tokenized text list, and raw texts.
-        """
-        if len(anno['images']) > self.max_num_images:
-            start_fid = random.randint(0, len(anno['images']) - self.max_num_images - 1)
-        else:
-            start_fid = 0
+        """Extracts interleaved image-text data from annotation."""
+        max_start = max(len(anno['images']) - self.max_num_images, 0)
+        start_fid = random.randint(0, max_start) if max_start > 0 else 0
 
         image_paths = anno['images'][start_fid: start_fid + self.max_num_images]
         texts = anno['captions'][start_fid: start_fid + self.max_num_images]
@@ -142,11 +133,16 @@ class VISTDataset(Dataset):
 
         for path, text in zip(image_paths, texts):
             full_path = os.path.join(self.root, path)
-            if not full_path.endswith('.jpg'):
-                full_path += '.jpg'
-            image = self.loader(full_path)
-            image = self.transform(image, resolution=self.image_size)
-            image_list.append(image)
+            if not full_path.endswith('.png'):
+                full_path += '.png'
+
+            if not os.path.exists(full_path):
+                print(f"[WARN] Image not found: {full_path}")
+                image_list.append(None)
+            else:
+                image = self.loader(full_path)
+                image = self.transform(image, resolution=self.image_size)
+                image_list.append(image)
 
             text_tokens = self.text_tokenizer(
                 text,
@@ -157,7 +153,8 @@ class VISTDataset(Dataset):
             text_token_list.append(text_tokens)
 
         # Add flag token to the first text token list
-        text_token_list[0] = self.flag_tokens + text_token_list[0]
+        if len(text_token_list) > 0:
+            text_token_list[0] = self.flag_tokens + text_token_list[0]
 
         # Pad lists if fewer than max_num_images
         if len(image_list) != self.max_num_images:
@@ -171,11 +168,10 @@ class VISTDataset(Dataset):
         return len(self.samples)
 
     def __getitem__(self, idx: int) -> Optional[Dict[str, Any]]:
+        if idx >= len(self.samples):
+            return None  # 인덱스 범위 초과 시 None 반환
+
         try:
-            # print("\n++++++++++++++++++++++++++++++++++++++++idx", idx)
-            # print("\n++++++++++++++++++++++++++++++++++++++++samples", len(self.samples))
-            # print("Length from __len__():", len(dataset))
-            # print("Actual length of samples:", len(dataset.samples))
             anno = self.samples[idx]
             if len(anno['images']) == 0:
                 return self.__getitem__(idx + 1)
@@ -223,8 +219,9 @@ class VISTDataset(Dataset):
                 'data_type': self.data_type,
             }
 
-        except Exception:  # pylint: disable=broad-except
-            return self.__getitem__(idx + 1)
+        except Exception as e:  # pylint: disable=broad-except
+            print(f"[ERROR] Failed to load item at idx {idx}: {e}")
+            return None
 
     def collate_fn(self, batch: List[Optional[Dict[str, Any]]]) -> Dict[str, torch.Tensor]:
         """Collate function to batch data safely (ignores None)."""
