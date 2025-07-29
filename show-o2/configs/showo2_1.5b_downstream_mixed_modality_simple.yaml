@@ -5,9 +5,9 @@ wandb:
 # 410k -- 512 res mixedmodal
 
 experiment:
-    project: "showo2-2b-stage-1"
-    name: "showo2-1.5b-downstream-mixed-modality-432x432"
-    output_dir: "showo2-1.5b-downstream-mixed-modality-432x432"
+    project: "show-o2-2b-stage-2"
+    name: "checkpoint3-2000-show-o2-1.5b-downstream-mixed-modality-432x432"
+    output_dir: "checkpoint3-2000-show-o2-1.5b-downstream-mixed-modality-432x432"
     output_dataloader_state_dir: null
     max_train_examples_t2i: 60000000 # 10M HQ generation data
     max_train_examples_mmu: null
@@ -20,12 +20,12 @@ experiment:
 model:
     vae_model:
         type: "wan21"
-        pretrained_model_path: "Wan2.1_VAE.pth"
+        pretrained_model_path: "Wan_VAE_model/Wan2.1_VAE.pth"
 
     showo:
         model_name: "Showo2"
         load_from_showo: True #False
-        pretrained_model_path: "showlab/show-o2-1.5B"
+        pretrained_model_path: "showlab/checkpoint3-2000" # "showlab/show-o2-1.5B"
         llm_model_path: "Qwen/Qwen2.5-1.5B-Instruct"
         llm_vocab_size: null # will be updated when setting the tokenizer in other code files
         hidden_size: 1536
@@ -41,8 +41,8 @@ model:
         clip_latent_dim: 1152
         add_qk_norm: True
         add_time_embeds: True
-        frozen_params: [ 'image_embedder_und', 'und_trans', 'showo', 'position_embedding'] # , 'image_embedder_gen', 'fusion_proj'
-#        frozen_params: null
+        # frozen_params: [ 'image_embedder_und', 'und_trans', 'position_embedding'] # , 'image_embedder_gen', 'fusion_proj'
+        frozen_params: null
         params_not_load: null
 
     clip:
@@ -50,13 +50,14 @@ model:
 
     gradient_checkpointing: True
 
+base_path: "/home/a6000/bk-project/multimodal-showo/show-o2/AvaMERG_img_inter"
 dataset:
     samp_probs: null
     accumulation: 1
     mixed_loader_mode: "sequential_max_size_cycle"
     params:
-        train_mixed_modal_shards_path_or_url: "./AvaMERG_img_inter/image_v5_0_128"
-        annotation_path: "./AvaMERG_img_inter/train_inter_final.json"
+        train_mixed_modal_shards_path_or_url: "${base_path}/image_v5_0_128"
+        annotation_path: "${base_path}/train_inter_final.json"
         is_clip_encoder: False
         default_system_prompt: ""
         add_caption_prompt: True

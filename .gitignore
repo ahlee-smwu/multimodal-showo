@@ -6,3 +6,5 @@ checkpoints/
 wandb/
 .idea/
 *.iml
+__pycache__/
+*.pyc
