@@ -8,3 +8,11 @@ show-o2/AvaMERG_img_test/
 show-o2/AvaMERG_video
 checkpoints/
 wandb/
+show-o2/generated_videos/
+.idea
+.pyc
+__pycache__/
+.DS_Store
+.ipynb_checkpoints
+.pt
+show-o2/showlab/*
