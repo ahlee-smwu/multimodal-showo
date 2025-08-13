@@ -88,7 +88,7 @@ class VISTDataset(Dataset):
         with open(self.anno_path) as file:
             self.samples = json.load(file)
 
-        print(f"VST dataset loaded. {len(self.samples)} samples!")
+        print(f"VIST dataset loaded. {len(self.samples)} samples!")
 
         self.flag_tokens = self.text_tokenizer(
             "Mixed-modality generation (VIST).", add_special_tokens=False
@@ -161,7 +161,6 @@ class VISTDataset(Dataset):
             image_list += [None] * (self.max_num_images - len(image_list))
             text_token_list += [None] * (self.max_num_images - len(text_token_list))
             texts += [''] * (self.max_num_images - len(texts))
-
         return image_list, text_token_list, texts
 
     def __len__(self) -> int:

@@ -255,67 +255,90 @@ import copy
 
 def format_interleaved_sequence_video(
     video_frame_lists, text_token_list,
-    bos_id, eos_id, boi_id, eoi_id, pad_id, img_pad_id,
+    bos_id, eos_id, bov_id, eov_id, pad_id, vid_pad_id,
     num_image_tokens_per_frame, num_frames,
     max_seq_len, max_num_videos,
     system_tokens=None, system_token_len=0
 ):
     """
-    Format a sequence of videos and texts into a single token sequence.
+    Format interleaved text & video sequence for LLM
 
-    video_frame_lists: List[List[Tensor]], each inner list is frames of a video
-    text_token_list: List[List[int]]
+    Args:
+        video_frame_lists: List[List[Tensor or None]]  # 각 video는 frame list
+        text_token_list:   List[List[int] or None]
+        num_image_tokens_per_frame: int, 각 frame 당 이미지 토큰 수
+        num_frames: int, 각 비디오에서 사용되는 프레임 개수
+        max_seq_len: int
+        max_num_videos: int (e.g. 5 등등)
+        system_tokens: Optional[List[List[int]]], 3개 리스트가 필요 (optional)
+        system_token_len: int
+    Returns:
+        text_tokens: [max_seq_len] LongTensor
+        text_labels: [max_seq_len] LongTensor
+        modality_positions: [max_num_videos, 2] LongTensor (start, length)
+        text_mask: [max_seq_len] LongTensor
+        image_mask: [max_seq_len] LongTensor
     """
+    assert len(video_frame_lists) == len(text_token_list), \
+        "video_frame_lists and text_token_list length mismatch!"
+
     text_tokens = []
     text_labels = []
     modality_positions = []
 
-    cur_len = 1 + system_token_len  # BOS + optional system tokens
+    # system_tokens 실제 삽입은 나중에 하므로 임시 누적 길이 잡음
+    cur_len = 1 + system_token_len  # <bos> (+system)
 
-    for txt_token, video_frames in zip(text_token_list, video_frame_lists):
+    for idx in range(len(text_token_list)):
+        txt_token = text_token_list[idx]
+        video_frames = video_frame_lists[idx]
+
         if txt_token is not None:
             text_tokens.extend(txt_token)
-            text_labels.extend(copy.deepcopy(txt_token))
+            text_labels.extend(txt_token)
             cur_len += len(txt_token)
 
         if video_frames is not None:
+            # 총 image 토큰 개수: num_image_tokens_per_frame * num_frames
             total_img_tokens = num_image_tokens_per_frame * num_frames
-            text_tokens.extend([boi_id] + [img_pad_id] * total_img_tokens + [eoi_id])
-            text_labels.extend([boi_id] + [img_pad_id] * total_img_tokens + [eoi_id])
+            # image token block: <|img_start|> + [img_pad_id] * (프레임수*프레임당토큰수) + <|img_end|>
+            text_tokens.extend([bov_id] + [vid_pad_id] * total_img_tokens + [eov_id])
+            text_labels.extend([bov_id] + [vid_pad_id] * total_img_tokens + [eov_id])
+            # modality_positions: (idx, (시작, length))
+            # 이미지 토큰들은 <|img_start|> 바로 다음부터 시작, cur_len+1
+            modality_positions.append((cur_len+1, total_img_tokens))    # start point, length
+            cur_len += 1 + total_img_tokens + 1  # <img_start>, tokens, <img_end>
 
-            modality_positions.append((cur_len + 1, total_img_tokens))  # skip <|img_start|>
-            cur_len += 1 + total_img_tokens + 1
-
-    # Add special tokens
+    # 시스템 토큰 처리
     if system_token_len == 0:
         text_tokens = [bos_id] + text_tokens + [eos_id]
         text_labels = [bos_id] + text_labels + [eos_id]
     else:
-        if system_tokens is None or len(system_tokens) != 3:
-            raise ValueError("Expected system_tokens of length 3 when system_token_len > 0")
-        text_tokens = [bos_id] + system_tokens[0] + system_tokens[1] + system_tokens[2] + text_tokens + [eos_id]
+        assert (system_tokens is not None) and (sum(len(x) for x in system_tokens) == system_token_len), \
+            f"system_token_len={system_token_len} but got {sum(len(x) for x in system_tokens)}"
+        text_tokens = [bos_id] \
+            + list(system_tokens[0]) + list(system_tokens[1]) + list(system_tokens[2]) \
+            + text_tokens + [eos_id]
         text_labels = [bos_id] + [-100] * system_token_len + text_labels + [eos_id]
 
-    # Padding
+    # 패딩
     text_len = len(text_tokens)
     if text_len > max_seq_len:
-        raise ValueError(f"Sequence length {text_len} exceeds max_seq_len {max_seq_len}")
-
+        raise ValueError(f"Generated sequence ({text_len}) > max_seq_len ({max_seq_len})")
     pad_len = max_seq_len - text_len
     text_tokens += [pad_id] * pad_len
     text_labels += [-100] * pad_len
 
-    # Convert to tensors with correct dtype
     text_tokens = torch.tensor(text_tokens, dtype=torch.long)
     text_labels = torch.tensor(text_labels, dtype=torch.long)
 
-    # Pad modality_positions
+    # modality_positions 패딩 (길이 맞추기, 미채워진 곳은 (0, 0))
     if len(modality_positions) < max_num_videos:
         modality_positions += [(0, 0)] * (max_num_videos - len(modality_positions))
     modality_positions = torch.tensor(modality_positions, dtype=torch.long)
 
-    # Masks
-    text_mask = ((text_tokens != pad_id) & (text_tokens != img_pad_id)).long()
-    image_mask = (text_tokens == img_pad_id).long()
+    # 마스크
+    text_mask = ((text_tokens != pad_id) & (text_tokens != vid_pad_id)).long()
+    image_mask = (text_tokens == vid_pad_id).long()
 
     return text_tokens, text_labels, modality_positions, text_mask, image_mask

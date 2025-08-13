@@ -45,13 +45,51 @@ if torch.cuda.is_available():
     flex_attention = torch.compile(flex_attention)
 
 from datasets import create_imagetext_dataloader, MixedDataLoader, VISTDataset
-from datasets.video_dataset_vist_based import VideoDataset
+from datasets.video_dataset_vist_based import VISTVideoDataset
 from utils import get_config, flatten_omega_conf, AverageMeter, denorm, denorm_vid, get_hyper_params, \
     path_to_llm_name, _freeze_params
 
 from transport import Sampler, create_transport
 
 logger = get_logger(__name__, log_level="INFO")
+
+# LoRA imports
+from peft import (
+        LoraConfig,
+        TaskType,
+        get_peft_model,
+        prepare_model_for_kbit_training,
+    )
+
+def _apply_lora_to_showo(model: Showo2Qwen2_5, r: int = 64, alpha: int = 32, dropout: float = 0.1,
+                          target_modules=("q_proj", "k_proj", "v_proj", "o_proj")):
+    """Attach a LoRA adapter to the Showo2Qwen2_5.showo (Qwen2.5) sub-module.
+    Returns the patched model with showo wrapped by PEFT.
+    """
+    logger.info("Applying LoRA to Qwen2.5 sub-module …")
+    lora_cfg = LoraConfig(
+        task_type=TaskType.CAUSAL_LM,
+        r=r,
+        lora_alpha=alpha,
+        lora_dropout=dropout,
+        target_modules=list(target_modules),
+        bias="none",
+        inference_mode=False,
+    )
+    # If you plan to train in 8-bit / 4-bit, uncomment next line
+    # model.showo = prepare_model_for_kbit_training(model.showo)
+    model.showo = get_peft_model(model.showo, lora_cfg)
+    logger.info(model.showo.print_trainable_parameters())
+    return model
+
+def print_param_info(model, tag=""):
+    total_params = sum(p.numel() for p in model.parameters())
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print(f"[{tag}] 전체 파라미터 수: {total_params:,}")
+    print(f"[{tag}] 학습 가능 파라미터 수: {trainable_params:,}")
+    print(f"[{tag}] 학습 가능 파라미터 비율: {100 * trainable_params / total_params:.4f}%")
+    return total_params, trainable_params
+
 
 
 def main():
@@ -75,7 +113,7 @@ def main():
         split_batches=True,
     )
 
-    bs_mixed_modal = config.training.batch_size_mixed_modal
+    bs_mixed_modal = config.training.batch_size_video
 
     if "concat" in config.dataset.mixed_loader_mode:
         raise NotImplementedError
@@ -159,12 +197,95 @@ def main():
     text_tokenizer, showo_token_ids = get_text_tokenizer(config.model.showo.llm_model_path, add_showo_tokens=True,
                                                          return_showo_token_ids=True,
                                                          llm_name=path_to_llm_name[config.model.showo.llm_model_path])
+    # print("#####################################showo_token_ids contents:")
+    # for token_name, token_id in showo_token_ids.items():
+    #     print(f"{token_name}: {token_id}")
+    '''
+    bos_id: 151644
+    eos_id: 151645
+    boi_id: 151652 = im_start
+    eoi_id: 151653 = im_end
+    bov_id: 151667 !
+    eov_id: 151668 !
+    img_pad_id: 151655
+    vid_pad_id: 151656 !
+    img_id: 151666'''
+
     config.model.showo.llm_vocab_size = len(text_tokenizer)
 
+    import warnings # ignore warning for model to device
+    warnings.filterwarnings("ignore", message=".*meta parameter.*")
+
     if config.model.showo.load_from_showo:
-        model = Showo2Qwen2_5.from_pretrained(config.model.showo.pretrained_model_path, use_safetensors=False).to(accelerator.device)
+        model, loading_info = Showo2Qwen2_5.from_pretrained(config.model.showo.pretrained_model_path, use_safetensors=False, output_loading_info=True) #.to(accelerator.device)
+        model.to(accelerator.device)
+
+        missing_keys = loading_info["missing_keys"]
+        unexpected_keys = loading_info["unexpected_keys"]
+        mismatched_keys = [k for k, _ in loading_info["mismatched_keys"]]
+        # 전체 key 수: 현재 모델 state_dict key 개수
+        total_keys = len(model.state_dict().keys())
+        loaded_keys_count = total_keys - len(missing_keys) - len(mismatched_keys)
+        loaded_ratio = loaded_keys_count / total_keys * 100
+        print(f"로드된 레이어 비율: {loaded_ratio:.2f}%, {loaded_keys_count}/{total_keys}")
+        if missing_keys:
+            print("로드 안 된 key:", missing_keys)
+            print("shape mismatch key:", mismatched_keys)
+            print("체크포인트에만 있는 key:", unexpected_keys)
     else:
         model = Showo2Qwen2_5(**config.model.showo).to(accelerator.device)
+    dtypes = set(param.dtype for param in model.parameters())
+    print("#######before lora", dtypes)
+
+    # ---- Apply LoRA ----
+    # for name, param in model.named_parameters():
+    #     print(f"{name:50s} | shape: {tuple(param.shape)}")
+    model = _apply_lora_to_showo(model)
+    print_param_info(model, tag="LoRA_적용후_전체")
+    print_param_info(model.showo, tag="LoRA_적용후_showo2")
+    dtypes = set(param.dtype for param in model.parameters())
+    print("#######after lora", dtypes)
+
+
+    '''reset module name to base model'''
+
+    class ShowoWrapper(torch.nn.Module):
+        def __init__(self, showo_model):
+            super().__init__()
+            self.__dict__['showo'] = showo_model  # __dict__ 직접 할당
+
+        def named_modules(self, memo=None, prefix='', remove_duplicate=True):
+            # 직접 __dict__에서 showo 가져오기
+            showo = self.__dict__['showo']
+            for name, module in showo.named_modules(memo=memo, prefix=prefix, remove_duplicate=remove_duplicate):
+                clean_name = name.replace("base_model.model.", "")
+                yield clean_name, module
+
+        def named_parameters(self, prefix='', recurse=True):
+            showo = self.__dict__['showo']
+            for name, param in showo.named_parameters(prefix=prefix, recurse=recurse):
+                clean_name = name.replace("base_model.model.", "")
+                yield clean_name, param
+
+        def __getattr__(self, name):
+            if name == 'showo':
+                # showo 속성이 없으면 AttributeError 발생
+                raise AttributeError(f"'ShowoWrapper' object has no attribute '{name}'")
+            showo = self.__dict__.get('showo', None)
+            if showo is not None:
+                return getattr(showo, name)
+            else:
+                raise AttributeError(f"'ShowoWrapper' object has no attribute '{name}'")
+
+        def __setattr__(self, name, value):
+            if name == 'showo':
+                self.__dict__['showo'] = value
+            else:
+                super().__setattr__(name, value)
+
+    # model.showo = ShowoWrapper(model.showo)
+    # for name, param in model.named_parameters():
+    #     print(f"{name:50s} | shape: {tuple(param.shape)}")
 
     # Choose layers to freeze
     _freeze_params(model, config.model.showo.frozen_params)
@@ -250,7 +371,7 @@ def main():
     num_train_epochs = math.ceil(config.training.max_train_steps / num_update_steps_per_epoch)'''
 
     '''Video dataset'''
-    video_dataset = VideoDataset(
+    dataset = VISTVideoDataset(
         root=dataset_config.train_mixed_modal_shards_path_or_url,  # 비디오 파일들이 있는 디렉토리
         anno_path=dataset_config.annotation_path,  # .json annotation 경로
         text_tokenizer=text_tokenizer,
@@ -266,9 +387,9 @@ def main():
         system=("", "", ""),  # 또는 원하는 system prompt
     )
     train_dataloader_video = create_dataloader(
-        video_dataset,
+        dataset,
         config.training.batch_size_video,
-        video_dataset.collate_fn,
+        dataset.collate_fn,
     )
     num_update_steps_per_epoch = len(train_dataloader_video)
     num_train_epochs = math.ceil(config.training.max_train_steps / num_update_steps_per_epoch)
@@ -360,72 +481,77 @@ def main():
     ):
 
         if config.model.vae_model.type == 'wan21':
-            if len(pixel_values.shape) == 4:
+            if len(pixel_values.shape) == 4: # image (b,c,h,w) -> video (b,c,1,h,w)
                 pixel_values = pixel_values.unsqueeze(2)
+            # else: already video data, shape=5
+
             image_latents = vae_model.sample(pixel_values)
+            # pixel: torch.Size([4, 3, 8, 432, 432])
+            # latent: torch.Size([4, 16, 2, 54, 54])
             recons_images = vae_model.batch_decode(image_latents)
-            if pixel_values.shape[2] == 1:
+            if pixel_values.shape[2] == 1: # image, only 1 frame
                 image_latents = image_latents.squeeze(2)
                 recons_images = recons_images.squeeze(2)
         else:
             raise NotImplementedError
 
-        c, h, w = image_latents.shape[1:]
-        # timesteps, noise, original image
-        # each for loop takes around 0.002, which is affordable
+        # 이 아래 코드가 video time dim frame을 처리할 수 있게 바꿔야 함 -> done!
+        is_video = (len(image_latents.shape) == 5)  # True if shape = (b, c, t, h, w)
+        if is_video:
+            c, t_dim, h, w = image_latents.shape[1:]
+        else:
+            c, h, w = image_latents.shape[1:]
+            t_dim = 1
+            image_latents = image_latents.unsqueeze(2)  # (b, c, 1, h, w)
+
         t_list, xt_list, ut_list, masks = [], [], [], []
         for i, tp in enumerate(data_type):
-            # x0->noise x1->image
-            t, x0, x1 = transport.sample(image_latents[i][None],
+            latent = image_latents[i].unsqueeze(0)  # (1, c, t, h, w)
+            t, x0, x1 = transport.sample(latent,
                                          config.training.und_max_t0 if tp in ['mmu', 'mmu_vid'] else None)
-            # timesteps, noised image, velocity
             t, xt, ut = transport.path_sampler.plan(t, x0, x1)
             t_list.append(t)
             xt_list.append(xt)
             ut_list.append(ut)
+
             if data_type[0] != 'interleaved_data':
                 if tp in ['mmu', 'mmu_vid'] and config.training.und_max_t0 == 1.0:
                     masks.append(image_masks[i][None] * 0.0)
                 else:
                     masks.append(image_masks[i][None])
 
-        t = torch.stack(t_list, dim=0).squeeze(-1)
-        xt = torch.cat(xt_list, dim=0)
-        ut = torch.cat(ut_list, dim=0)
+        t = torch.stack(t_list, dim=0).squeeze(-1)  # (b,) or (b, 1)
+        xt = torch.cat(xt_list, dim=0)  # (b, c, t, h, w)
+        ut = torch.cat(ut_list, dim=0)  # (b, c, t, h, w)
 
         if len(masks) != 0:
-            masks = torch.cat(masks, dim=0)
+            masks = torch.cat(masks, dim=0)  # (b, seq_len)
         else:
             masks = image_masks
 
         if data_type[0] == 'interleaved_data':
             b, n = shape
-            image_latents = image_latents.reshape(b, n, c, h, w)
-            ut = ut.reshape(b, n, c, h, w)
-            xt = xt.reshape(b, n, c, h, w)
+            image_latents = image_latents.reshape(b, n, c, t_dim, h, w)
+            ut = ut.reshape(b, n, c, t_dim, h, w)
+            xt = xt.reshape(b, n, c, t_dim, h, w)
             t = t.reshape(b, n)
 
             for i in range(b):
                 if random.random() < 0.7:
                     non_zero_max_idx = max([_ for _, pos in enumerate(modality_positions[i]) if pos[1] != 0])
                     idx = random.randint(1, non_zero_max_idx) if non_zero_max_idx != 0 else 0
-                    xt[i, :idx] = image_latents[i][None][:, :idx].clone()
-                    # ut[i, :idx] = torch.zeros_like(image_latents[i][None][:, :idx])
-                    t[i, :idx] = t[i, :idx] * 0.0 + 1.0
+                    xt[i, :idx] = image_latents[i][:idx].clone()  # (idx, c, t, h, w)
+                    t[i, :idx] = 1.0
 
                     for j in range(idx):
                         img_sid, length = modality_positions[i, j]
                         masks[i, img_sid: img_sid + length] = 0
 
-            ut = ut.reshape(b * n, c, h, w)
-            xt = xt.reshape(b * n, c, h, w)
+            # Flatten for training
+            ut = ut.reshape(b * n, c, t_dim, h, w)
+            xt = xt.reshape(b * n, c, t_dim, h, w)
             t = t.reshape(b * n)
 
-        # xt: noised output
-        # t: time step
-        # ut: target, velocity or noise of diffusion
-        # recon_images: recon img for visualization
-        # masks: mask for indicate which image token is processed, text and other image are not processed(stochastic)
         return xt, t, ut, recons_images, masks
 
     batch_time_m = AverageMeter()
@@ -438,13 +564,18 @@ def main():
 
             text_tokens = batch['text_tokens'].to(accelerator.device)
             text_labels = batch['text_labels'].to(accelerator.device)
-            pixel_values = batch['images'].to(accelerator.device).to(weight_type)
+            pixel_values = batch['videos'].to(accelerator.device).to(weight_type) # AttributeError: 'list' object has no attribute 'to'
+            # pixel_values = batch['images'].to(accelerator.device).to(weight_type) # AttributeError: 'list' object has no attribute 'to'
             if batch['data_type'][0] == 'interleaved_data':
                 b, n = pixel_values.shape[:2]
-                pixel_values = rearrange(pixel_values, "b n c h w -> (b n) c h w")
+                if len(pixel_values.shape) == 6: # video: b n c frame h w
+                    pixel_values = rearrange(pixel_values, "b n c f h w -> (b n) c f h w")
+                elif len(pixel_values.shape) == 5: # image: b n c h w
+                    pixel_values = rearrange(pixel_values, "b n c h w -> (b n) c h w")
                 batch['data_type'] = batch['data_type'] * n
             else:
                 b, n = 0, 0
+            # print("########## pixel", pixel_values.shape)
 
             text_masks = batch['text_masks'].to(accelerator.device)
             image_masks = batch['image_masks'].to(accelerator.device)
@@ -455,6 +586,7 @@ def main():
                                                                                                     (b, n),
                                                                                                     image_masks,
                                                                                                     modality_positions)
+                # pixel(frames) -> latents(frames/4) # sum up 4 frames to 1
             # B=None would potentially induce loss spike when there are a lot of ignored labels (-100) in the batch
             # we must set B=text_tokens.shape[0] (loss spike may still happen sometimes)
             # omni_mask_fn = omni_attn_mask(modality_positions)

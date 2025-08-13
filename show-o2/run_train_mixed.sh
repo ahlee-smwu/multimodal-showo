@@ -1,7 +1,7 @@
 # run_train.sh
 #!/bin/bash
 
-export CUDA_VISIBLE_DEVICES=0,1
+export CUDA_VISIBLE_DEVICES=2,3
 
 accelerate launch \
   --config_file ../accelerate_configs/8_gpus_deepspeed_zero2.yaml \
