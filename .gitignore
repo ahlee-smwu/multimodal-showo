@@ -8,3 +8,4 @@ wandb/
 *.iml
 __pycache__/
 *.pyc
+.pt
