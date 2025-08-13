@@ -14,7 +14,7 @@ experiment:
     name: "Showo2"
     output_dir: "Showo2_432x432_t2i"
 
-model_path: "./2nd_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-1000/unwrapped_model/pytorch_model.bin" # pre-trained weight from local
+model_path: "./3rd_show-o2-1.5b-downstream-mixed-modality-432x432/checkpoint-3000/unwrapped_model/pytorch_model.bin" # pre-trained weight from local
 
 model:
     weight_type: "bfloat16"

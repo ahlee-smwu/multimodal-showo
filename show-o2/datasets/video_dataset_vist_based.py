@@ -10,7 +10,7 @@ from torchvision.datasets.folder import default_loader
 from datasets.utils import video_transform, format_interleaved_sequence_video
 
 
-class VideoDataset(Dataset):
+class VISTVideoDataset(Dataset):
     """Dataset for interleaved Video-Text pairs."""
 
     def __init__(
@@ -36,7 +36,10 @@ class VideoDataset(Dataset):
         self.eos_id = showo_token_ids['eos_id']
         self.boi_id = showo_token_ids['boi_id']
         self.eoi_id = showo_token_ids['eoi_id']
+        self.bov_id = showo_token_ids['bov_id']
+        self.eov_id = showo_token_ids['eov_id']
         self.img_pad_id = showo_token_ids['img_pad_id']
+        self.vid_pad_id = showo_token_ids['vid_pad_id']
         self.max_seq_len = max_seq_len
         self.image_size = image_size
         self.num_image_tokens = num_image_tokens
@@ -44,7 +47,7 @@ class VideoDataset(Dataset):
         self.w = latent_width
         self.cond_dropout_prob = cond_dropout_prob
         self.num_frames = num_frames
-        self.data_type = "mmu_vid"
+        self.data_type = "interleaved_data"
         self.transform = video_transform
         self.max_num_videos = max_num_videos
 
@@ -58,7 +61,7 @@ class VideoDataset(Dataset):
         print(f"Video dataset loaded. {len(self.samples)} samples!")
 
         self.flag_tokens = self.text_tokenizer(
-            "Mixed-modality generation (video).", add_special_tokens=False
+            "Mixed-modality generation (VIST video).", add_special_tokens=False
         ).input_ids
         self.system_tokens = self.text_tokenizer(system, add_special_tokens=False).input_ids
         self.system_token_len = sum(len(tokens) for tokens in self.system_tokens)
@@ -131,7 +134,8 @@ class VideoDataset(Dataset):
             except Exception as e:
                 print(f"❌ Tokenization Error!\nText: '{text}'\nException: {e}")
                 text_tokens = None  # 실패시 None 처리하거나 빈 리스트
-                text_token_list.append(text_tokens)  # 먼저 append
+
+            text_token_list.append(text_tokens)
 
         # Add flag token
         text_token_list[0] = self.flag_tokens + text_token_list[0]
@@ -163,19 +167,19 @@ class VideoDataset(Dataset):
                 text_mask,
                 image_mask,
             ) = format_interleaved_sequence_video(
-                video_list,
-                text_token_list,
-                self.bos_id,
-                self.eos_id,
-                self.boi_id,
-                self.eoi_id,
-                self.pad_id,
-                self.img_pad_id,
-                self.num_image_tokens,
-                self.max_seq_len,
-                self.max_num_videos,
+                video_frame_lists = video_list,
+                text_token_list = text_token_list,
+                bos_id = self.bos_id,
+                eos_id = self.eos_id,
+                bov_id = self.bov_id,
+                eov_id = self.eov_id,
+                pad_id = self.pad_id,
+                vid_pad_id = self.vid_pad_id,
+                num_image_tokens_per_frame = self.num_image_tokens,
+                num_frames = -(-self.num_frames // 4), # 4 frame is sum up to 1 frame in prepare_latents_and_labels //train_video.py
+                max_seq_len = self.max_seq_len,
+                max_num_videos = self.max_num_videos,
             )
-            print(f"[DEBUG] After format_interleaved_sequence_video call, idx={idx}")
 
             # 강제로 long 타입 지정
             text_tokens = text_tokens.long()
@@ -187,11 +191,12 @@ class VideoDataset(Dataset):
             text_labels[1: len(self.flag_tokens) + 1] = -100
 
             # 값 및 타입 출력 (디버깅용)
-            print(f"text_tokens dtype: {text_tokens.dtype}, min: {text_tokens.min()}, max: {text_tokens.max()}")
-            print(f"text_labels dtype: {text_labels.dtype}, min: {text_labels.min()}, max: {text_labels.max()}")
-            print(f"modality_positions dtype: {modality_positions.dtype}, values: {modality_positions}")
-            print(f"text_mask dtype: {text_mask.dtype}, unique: {text_mask.unique()}")
-            print(f"image_mask dtype: {image_mask.dtype}, unique: {image_mask.unique()}")
+            # print(f"[DEBUG] After format_interleaved_sequence_video call, idx={idx}")
+            # print(f"text_tokens dtype: {text_tokens.dtype}, min: {text_tokens.min()}, max: {text_tokens.max()}")
+            # print(f"text_labels dtype: {text_labels.dtype}, min: {text_labels.min()}, max: {text_labels.max()}")
+            # print(f"modality_positions dtype: {modality_positions.dtype}, values: {modality_positions}")
+            # print(f"text_mask dtype: {text_mask.dtype}, unique: {text_mask.unique()}")
+            # print(f"image_mask dtype: {image_mask.dtype}, unique: {image_mask.unique()}")
 
             # Pad empty videos
             temp: List[torch.Tensor] = []
@@ -220,17 +225,45 @@ class VideoDataset(Dataset):
             return self.__getitem__((idx + 1) % len(self))
 
 
-    def collate_fn(self, batch: List[Dict[str, Any]]) -> Dict[str, torch.Tensor]:
+    def collate_fn(self, batch: List[Optional[Dict[str, Any]]]) -> Dict[str, torch.Tensor]:
+        """Collate function to batch data safely (ignores None)."""
+        batch = [b for b in batch if b is not None]  # None 제거
+        if not batch:
+            return {}  # 빈 배치 방지
+        batched = collections.defaultdict(list)
+        for data in batch:
+            for key, value in data.items():
+                batched[key].append(value)
+
+        for key, value in batched.items():
+            if key not in ('texts', 'data_type'):  # 리스트 유지
+                try:
+                    batched[key] = torch.stack(value, dim=0)
+                except Exception as e:
+                    print(f"[collate_fn] Failed to stack key={key} with error: {e}")
+                    raise
+            # 출력: batched 딕셔너리 키와 각 키별 리스트 길이, 값 샘플 확인
+        # print("===== Batched content preview =====")
+        # for key, val_list in batched.items():
+        #     print(f"Key: {key}, Number of items: {len(val_list)}")
+        #     # print(f" Sample items: {val_list[:1]}")  # 각 키별 앞 1개 값만 출력 (필요시 조절)
+        # print("==================================")
+
+        return batched
+
+    '''def collate_fn(self, batch: List[Dict[str, Any]]) -> Dict[str, torch.Tensor]:
         batched = collections.defaultdict(list)
         for data in batch:
             for key, value in data.items():
                 batched[key].append(value)
         for key in batched:
+            if key == 'texts':
+                print("#####################\n", batched[key])
             # shape 정보 출력
-            shapes = [v.shape for v in batched[key]]
+            shapes = [v.shape for v in batched[key]] # texts: AttributeError: 'list' object has no attribute 'shape'
             print(f"Key: {key}, Shapes in batch: {shapes}")
             if len(set(shapes)) != 1:
                 print(f"[ERROR] Shapes for key '{key}' are not all the same!")
             if key not in ("texts", "data_type"):
                 batched[key] = torch.stack(batched[key], dim=0)
-        return batched
+        return batched'''

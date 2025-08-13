@@ -278,8 +278,10 @@ class Showo2Qwen2_5(ModelMixin, ConfigMixin):
             return logits
         else:
             # multimoidal understanding and generatiopn
-            input_embeds = self.showo.model.embed_tokens(text_tokens)
-            dtype = input_embeds.dtype
+            # input_embeds = self.showo.model.embed_tokens(text_tokens) # org
+            input_embeds = self.showo.base_model.model.model.embed_tokens(text_tokens)   # LoRA
+            dtype = input_embeds.dtype # org
+            dtype = torch.bfloat16 # LoRA
             if len(image_latents.shape) != 4: # video
                 b, c, T, h, w = image_latents.shape
             else:
@@ -305,7 +307,7 @@ class Showo2Qwen2_5(ModelMixin, ConfigMixin):
             p = self.config.patch_size
             h_, w_ = h // p, w // p
             # specific for fixed resolution of 432x432
-            if self.position_embedding.weight.shape[-1] == self.image_position_ids.shape[-1]:
+            if self.position_embedding.weight.shape[-1] == self.image_position_ids.shape[-1]: # false, 한 배치만 보긴 함
                 image_embeds_und = image_embeds_und + self.position_embedding(self.image_position_ids)
                 image_embeds_und = self.und_trans(image_embeds_und)['last_hidden_state']
             # interpolate position embeddings for dynamic resolution
@@ -346,33 +348,43 @@ class Showo2Qwen2_5(ModelMixin, ConfigMixin):
             if image_labels is not None:
                 new_image_labels = torch.zeros([b, max_seq_len, p * p * c], device=device, dtype=dtype)
                 image_masks = image_masks[:, :, None].repeat(1, 1, p * p * c)
+            new_before = new_image_labels
 
             for i, modality_batch in enumerate(modality_positions):
-                for j, (offset, length) in enumerate(modality_batch):
-                    if self.config.add_time_embeds:
+                for j, (offset, length) in enumerate(modality_batch): # offset:start point, length:length
+                    if self.config.add_time_embeds: #True
                         input_embeds[i, offset] = time_embeds_proj[i * modality_positions.size(1) + j]
                         # length - 1 because we add 1 to the num_image_tokens when add_time_embeds=True
                         # it's necessary to include :length-1, as sometimes we may skip some idle images when length=0
-                        input_embeds[i, offset + 1:offset + 1 + length - 1] = image_embeds[
+                        input_embeds[i, offset + 1:offset + 1 + length - 1] = image_embeds[         # org: length - 1
                                                                               i * modality_positions.size(1) + j,
-                                                                              :max(length - 1, 0)]
+                                                                              :max(length - 1 , 0)]
                         if image_labels is not None:
                             # mask the position of time embedding
                             image_masks[i, offset] = 0
                             # it's necessary to include :length-1, as sometimes we may skip some idle images when length=0
-                            new_image_labels[i, offset + 1:offset + 1 + length - 1] = image_labels[
+                            test = image_labels[
                                                                                       i * modality_positions.size(
-                                                                                          1) + j, :max(length - 1, 0)]
+                                                                                          1) + j, :max(length - 1, 0)] # 값이 안 더해짐
+                                                                                        # 4(1배치에 이미지수)
+                            new_image_labels[i, offset + 1:offset + 1 + length - 1] = test      # org: length - 1
                     else:
                         input_embeds[i, offset:offset + length] = image_embeds[i * modality_positions.size(1) + j,
                                                                   :length]
                         if image_labels is not None:
                             new_image_labels[i, offset:offset + length] = image_labels[
                                                                           i * modality_positions.size(1) + j, :length]
+            new_after = new_image_labels
+            # if not torch.allclose(new_before, new_after, atol=1e-4):
+            #     print("🔺 값이 하나라도 다릅니다.") # new_before가 잘못돼서 after랑 같은 값을 가짐, 몰라 무시
+            # else:
+            #     print("모든 값이 같습니다.")
 
             outputs = self.showo(
                 inputs_embeds=input_embeds,
                 attention_mask=attention_mask,
+                    # 1,1,4352,4352
+                    # non-zero: 8403436, 44%
                 # position_ids=position_ids,
                 output_hidden_states=output_hidden_states
             )
@@ -391,11 +403,32 @@ class Showo2Qwen2_5(ModelMixin, ConfigMixin):
                                            modality_positions=modality_positions,
                                            )[0]
             v_pred = self.diffusion_head_b(last_hidden_states, time_embeds, modality_positions)
+                # torch.Size([1, 4352, 64])
+            # print("v_pred", v_pred.shape[0]) # torch.Size([4352, 64])
 
             # [:v_pred.shape[0]] is the valid image labels (special case for interleaved data training)
             if text_labels is not None and image_labels is not None:
                 loss_ntp = next_token_prediction(logits, text_labels, self.config.llm_vocab_size)
                 loss_flow = velocity_prediction(v_pred, new_image_labels[:v_pred.shape[0]], image_masks)
+                ## v_pred
+                    # torch.Size([1, 4352, 64])
+                    # non-zero: 278528,
+                ## new_image_labels[:v_pred.shape[0]]
+                    # torch.Size([1, 4352, 64]) 컷이 전 구간인데,,?,,
+                    # non-zero: 186624, 67%
+                ## mask
+                    # torch.Size([1, 4352, 64])
+                    # non-zero, zerp: 93312, 185216
+
+                ## mask와 new의 non-zero 구간이 잘 맞는지, 이게 틀어진 듯해
+                # (new_image_labels[:v_pred.shape[0]] != 0) & (image_masks != 0)).sum().item() # 93312, 둘 다 non-0
+                # ((new_image_labels[:v_pred.shape[0]] != 0) ^ (image_masks != 0)).sum().item() # 93312, 하나만 0
+                # ((a == 0) & (b == 0)).sum().item() # 91904, 둘 다 0
+                # 플립실험: (93312, 185216, 0)
+
+                # print('logits:',logits)
+                # print('ntp:', loss_ntp)
+                # print('flow', loss_flow)
                 return logits, loss_ntp, loss_flow
 
             elif image_labels is not None:
@@ -565,7 +598,8 @@ class Showo2Qwen2_5(ModelMixin, ConfigMixin):
             idx_next = torch.multinomial(probs, num_samples=1)
             result.append(idx_next[0][0])
             # append sampled index to the running sequence and continue
-            idx_next_embeds = self.showo.model.embed_tokens(idx_next)
+            # idx_next_embeds = self.showo.model.embed_tokens(idx_next) # org
+            idx_next_embeds = self.showo.base_model.model.model.embed_tokens(idx_next) # LoRA
             input_embeds = torch.cat([input_embeds, idx_next_embeds], dim=1)
 
             if eos_token is not None and idx_next.cpu() == eos_token:

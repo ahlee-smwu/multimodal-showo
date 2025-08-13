@@ -517,7 +517,7 @@ class WanVAE_(nn.Module):
         self.clear_cache()
         ## cache
         t = x.shape[2]
-        iter_ = 1 + (t - 1) // 4
+        iter_ = 1 + (t - 1) // 4    # 4 단위로 frame 처리 -> 1 frame 잘 안 됨
         ## 对encode输入的x，按时间拆分为1、4、4、4....
         for i in range(iter_):
             self._enc_conv_idx = [0]

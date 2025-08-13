@@ -106,7 +106,7 @@ class MixedDataLoader:
             self.exhausted = True
             raise
 
-    def _sequential_max_size_cycle(self):
+    def _sequential_max_size_cycle(self): # interleaved
 
         batched = []
         loaders_used = 0

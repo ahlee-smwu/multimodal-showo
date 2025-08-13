@@ -34,7 +34,8 @@ from accelerate.logging import get_logger
 from accelerate.utils import DistributedType, set_seed
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
-from models import Showo2Qwen2_5, omni_attn_mask_naive
+from models import Showo2Qwen2_5, omni_attn_mask_naive, omni_attn_mask
+from training.omni_attention import create_block_mask
 from models.lr_schedulers import get_scheduler
 from models.my_logging import set_verbosity_info, set_verbosity_error
 from models.misc import prepare_gen_input, get_text_tokenizer, get_weight_type
@@ -211,12 +212,14 @@ def main():
     # This means that the dataloading is not deterministic, but it's fast and efficient.
 
     def create_dataloader(dataset, batch_size, collate_fn):
+        generator = torch.Generator(device='cuda')
         if accelerator.num_processes > 2:
             sampler = DistributedSampler(dataset,
                                          num_replicas=accelerator.num_processes,
                                          rank=accelerator.process_index,
                                          shuffle=True,
-                                         drop_last=True
+                                         drop_last=True,
+                                         # generator=generator
                                          )
             shuffle = False
         else:
@@ -226,7 +229,7 @@ def main():
         dataloader = DataLoader(dataset, batch_size=batch_size,
                                                   sampler=sampler, collate_fn=collate_fn,
                                                   shuffle=shuffle, num_workers=dataset_config.num_workers,
-                                                  drop_last=True)
+                                                  drop_last=True, generator=generator)
         return dataloader
 
     dataset = VISTDataset(
@@ -261,7 +264,9 @@ def main():
 
     if config.experiment.resume_from_checkpoint:
         dirs = os.listdir(config.experiment.output_dir)
-        dirs = [d for d in dirs if d.startswith("checkpoint")]
+        # dirs = [d for d in dirs if d.startswith("checkpoint")]
+        dirs = [d for d in dirs if
+                d.startswith("checkpoint-") and d.split("-")[1].isdigit()]  # 250804 수정; checkpoint-final 있을 경우
         dirs = sorted(dirs, key=lambda x: int(x.split("-")[1]))
         path = dirs[-1] if len(dirs) > 0 else None
         if path is not None:
@@ -299,7 +304,7 @@ def main():
         optimizer=optimizer,
         num_training_steps=config.training.max_train_steps - global_step,
         num_warmup_steps=config.lr_scheduler.params.warmup_steps,
-        power=config.lr_scheduler.params.power,
+        # power=config.lr_scheduler.params.power,
     )
 
     ##################################
@@ -433,10 +438,10 @@ def main():
                                                                                                     modality_positions)
             # B=None would potentially induce loss spike when there are a lot of ignored labels (-100) in the batch
             # we must set B=text_tokens.shape[0] (loss spike may still happen sometimes)
-            # omni_mask_fn = omni_attn_mask(modality_positions)
+            omni_mask_fn = omni_attn_mask(modality_positions) # 여기서 마스크 정보가 다 준비됨
             # block_mask = create_block_mask(omni_mask_fn, B=text_tokens.shape[0], H=None,
-            #                                Q_LEN=preproc_config.max_seq_length,
-            #                                KV_LEN=preproc_config.max_seq_length, device=accelerator.device)
+            #                                Q_LEN=preproc_config.max_mixed_modal_seq_length,
+            #                                KV_LEN=preproc_config.max_mixed_modal_seq_length, device=accelerator.device)
             # or use naive omni attention mask, which is more stable
             block_mask = omni_attn_mask_naive(text_tokens.size(0),
                                               text_tokens.size(1),
